@@ -352,7 +352,7 @@ class SymbioticPair:
 
         Returns:
             NanoModel: A new instance of NanoModel.
-        """
+      
         return jsonpickle.decode(json_str)
-        """
+       
         return jsonpickle.decode(json_str)
