@@ -15,10 +15,11 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Install CUDA drivers
+    - name: Install PyTorch with CUDA
       run: |
-        sudo apt-get update
-        sudo apt-get install -y nvidia-cuda-toolkit
+        pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+        pip install -r requirements.txt
+
 
     - name: Install dependencies
       run: |
