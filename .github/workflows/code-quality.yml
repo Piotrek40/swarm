@@ -20,7 +20,7 @@ jobs:
         pip install -r requirements-dev.txt
     - name: Run Black and commit changes
       run: |
-        black .
+        black . || true
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add -A
@@ -30,6 +30,8 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ github.ref }}
+    - name: Run Black check
+      run: black --check .
     - name: Run Pylint
       run: pylint **/*.py
     - name: Run Mypy
