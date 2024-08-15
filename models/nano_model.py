@@ -228,10 +228,10 @@ class NanoModel(nn.Module):
         Creates a new instance of NanoModel from a JSON string.
 
         Args:
-            json_str (str): A JSON representation of the model.
+            json_str: A JSON representation of the model.
 
         Returns:
-            NanoModel: A new instance of NanoModel.
+            A new instance of NanoModel.
         """
         return jsonpickle.decode(json_str)
 
