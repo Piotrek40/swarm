@@ -1,20 +1,25 @@
+"""Visualization utilities for NanoAI experiments."""
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-from config import RESULT_DIR
+from typing import List, Tuple
 import os
 import torch
+from config import RESULT_DIR
 
 
 class Visualizer:
+    """Class for creating visualizations of experiment results."""
+
     @staticmethod
-    def plot_fitness_over_time(generations, fitness_values, dataset_name, config_idx):
+    def plot_fitness_over_time(generations: List[int], fitness_values: List[float], dataset_name: str, config_idx: int) -> None:
         """
         Plots the fitness values over generations.
 
         Args:
-            generations (list): List of generation numbers.
-            fitness_values (list): Corresponding fitness values.
+            generations (List[int]): List of generation numbers.
+            fitness_values (List[float]): Corresponding fitness values.
             dataset_name (str): Name of the dataset.
             config_idx (int): Index of the configuration.
         """
@@ -29,12 +34,12 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_population_diversity(diversity_values, dataset_name, config_idx):
+    def plot_population_diversity(diversity_values: List[float], dataset_name: str, config_idx: int) -> None:
         """
         Plots the population diversity over generations.
 
         Args:
-            diversity_values (list): List of diversity values.
+            diversity_values (List[float]): List of diversity values.
             dataset_name (str): Name of the dataset.
             config_idx (int): Index of the configuration.
         """
@@ -49,13 +54,13 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_pareto_front(objective1_values, objective2_values, dataset_name, config_idx):
+    def plot_pareto_front(objective1_values: List[float], objective2_values: List[float], dataset_name: str, config_idx: int) -> None:
         """
         Plots the Pareto front for two objectives.
 
         Args:
-            objective1_values (list): Values for the first objective.
-            objective2_values (list): Values for the second objective.
+            objective1_values (List[float]): Values for the first objective.
+            objective2_values (List[float]): Values for the second objective.
             dataset_name (str): Name of the dataset.
             config_idx (int): Index of the configuration.
         """
@@ -70,12 +75,12 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_model_complexity_distribution(complexities, dataset_name, config_idx):
+    def plot_model_complexity_distribution(complexities: List[int], dataset_name: str, config_idx: int) -> None:
         """
         Plots the distribution of model complexities in the population.
 
         Args:
-            complexities (list): List of model complexities.
+            complexities (List[int]): List of model complexities.
             dataset_name (str): Name of the dataset.
             config_idx (int): Index of the configuration.
         """
@@ -92,13 +97,13 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_learning_curves(train_losses, val_losses, dataset_name, config_idx):
+    def plot_learning_curves(train_losses: List[float], val_losses: List[float], dataset_name: str, config_idx: int) -> None:
         """
         Plots the learning curves (train and validation losses).
 
         Args:
-            train_losses (list): List of training losses.
-            val_losses (list): List of validation losses.
+            train_losses (List[float]): List of training losses.
+            val_losses (List[float]): List of validation losses.
             dataset_name (str): Name of the dataset.
             config_idx (int): Index of the configuration.
         """
@@ -115,13 +120,13 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_confusion_matrix(cm, class_names, dataset_name, config_idx):
+    def plot_confusion_matrix(cm: np.ndarray, class_names: List[str], dataset_name: str, config_idx: int) -> None:
         """
         Plots a confusion matrix.
 
         Args:
-            cm (numpy.ndarray): The confusion matrix.
-            class_names (list): List of class names.
+            cm (np.ndarray): The confusion matrix.
+            class_names (List[str]): List of class names.
             dataset_name (str): Name of the dataset.
             config_idx (int): Index of the configuration.
         """
@@ -138,13 +143,13 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_feature_importance(feature_importance, feature_names, dataset_name, config_idx):
+    def plot_feature_importance(feature_importance: List[float], feature_names: List[str], dataset_name: str, config_idx: int) -> None:
         """
         Plots feature importance.
 
         Args:
-            feature_importance (list): List of feature importance scores.
-            feature_names (list): List of feature names.
+            feature_importance (List[float]): List of feature importance scores.
+            feature_names (List[str]): List of feature names.
             dataset_name (str): Name of the dataset.
             config_idx (int): Index of the configuration.
         """
@@ -159,7 +164,7 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_model_architecture(model, dataset_name, config_idx):
+    def plot_model_architecture(model: torch.nn.Module, dataset_name: str, config_idx: int) -> None:
         """
         Plots the architecture of a model.
 
