@@ -23,9 +23,10 @@ jobs:
 
     - name: Set up Conda environment
       run: |
-        conda create -n myenv python=3.10
-        source activate myenv
-        echo $CONDA/bin >> $GITHUB_PATH
+        conda init bash
+        conda create --name myenv python=3.10 -y
+        source ~/.bashrc
+        conda activate myenv
 
     - name: Install dependencies
       run: |
