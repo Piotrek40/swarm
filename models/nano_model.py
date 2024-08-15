@@ -228,10 +228,10 @@ class NanoModel(nn.Module):
         Creates a new instance of NanoModel from a JSON string.
 
         Args:
-            json_str: A JSON representation of the model.
+            json_str (str): A JSON representation of the model.
 
         Returns:
-            A new instance of NanoModel.
+            NanoModel: A new instance of NanoModel.
         """
         return jsonpickle.decode(json_str)
 
@@ -343,16 +343,14 @@ class SymbioticPair:
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'NanoModel':
+    def from_json(cls, json_str: str) -> 'SymbioticPair':
         """
-        Creates a new instance of NanoModel from a JSON string.
+        Creates a new instance of SymbioticPair from a JSON string.
 
         Args:
-            json_str: A JSON representation of the model.
+            json_str (str): A JSON representation of the symbiotic pair.
 
         Returns:
-            NanoModel: A new instance of NanoModel.
-      
-        return jsonpickle.decode(json_str)
-       
+            SymbioticPair: A new instance of SymbioticPair.
+        """
         return jsonpickle.decode(json_str)
