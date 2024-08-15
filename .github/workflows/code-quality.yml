@@ -18,4 +18,15 @@ jobs:
     - name: Run flake8
       run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
     - name: Run black
-      run: black --check .
+      run: black .
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git diff --quiet && git diff --staged --quiet || git commit -m "Apply automatic formatting"
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
