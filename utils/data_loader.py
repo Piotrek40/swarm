@@ -1,41 +1,54 @@
-import torch
-from torch.utils.data import DataLoader, TensorDataset, random_split
-from torchvision import datasets, transforms
+"""Data loading and preprocessing utilities for NanoAI."""
+
+from typing import Tuple, List, Dict, Any
+import random
+
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-import numpy as np
-from typing import Tuple, List, Dict, Any
+from torch import Tensor, tensor, long, float32, nn, flip, stack
+from torch.utils.data import DataLoader, TensorDataset, random_split
+from torchvision import datasets, transforms
 from tslearn.datasets import UCR_UEA_datasets
 from datasets import load_dataset
+
 from config import DEVICE, BATCH_SIZE, TEST_SIZE, VALIDATION_SIZE, GENERATOR, DATASET_CONFIGS
-import random
 
 # Cache for loaded data
 data_cache: Dict[str, Tuple[DataLoader, DataLoader, DataLoader]] = {}
 
 
 def load_data(dataset_name: str) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    """Load and prepare data for a given dataset."""
+    """
+    Load and prepare data for a given dataset.
+
+    Args:
+        dataset_name: Name of the dataset to load.
+
+    Returns:
+        Tuple of train, validation, and test data loaders.
+
+    Raises:
+        ValueError: If the dataset is not supported.
+    """
     if dataset_name in data_cache:
         return data_cache[dataset_name]
 
-    if dataset_name == "iris":
-        loaders = load_iris_data()
-    elif dataset_name == "cifar10":
-        loaders = load_cifar10_data()
-    elif dataset_name == "imdb":
-        loaders = load_imdb_data()
-    elif dataset_name == "ner":
-        loaders = load_synthetic_ner_data()
-    elif dataset_name == "ucr_timeseries":
-        loaders = load_ucr_timeseries_data()
-    elif dataset_name == "custom":
-        loaders = load_custom_data()
-    else:
+    loaders = {
+        "iris": load_iris_data,
+        "cifar10": load_cifar10_data,
+        "imdb": load_imdb_data,
+        "ner": load_synthetic_ner_data,
+        "ucr_timeseries": load_ucr_timeseries_data,
+        "custom": load_custom_data,
+    }
+
+    if dataset_name not in loaders:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 
-    data_cache[dataset_name] = loaders
-    return loaders
+    data_loaders = loaders[dataset_name]()
+    data_cache[dataset_name] = data_loaders
+    return data_loaders
 
 
 def load_iris_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
@@ -44,7 +57,7 @@ def load_iris_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
 
     data = load_iris()
     X, y = data.data, data.target
-    y = torch.nn.functional.one_hot(torch.tensor(y, dtype=torch.long)).float()
+    y = nn.functional.one_hot(tensor(y, dtype=long)).float()
     return prepare_data(X, y)
 
 
@@ -68,48 +81,28 @@ def load_imdb_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
     """Load and prepare the IMDB dataset."""
     dataset = load_dataset("imdb")
 
-    # Tokenization and vocabulary creation
-    vocab = set()
-    for split in ["train", "test"]:
-        for text in dataset[split]["text"]:
-            vocab.update(text.split())
-    word_to_idx = {word: idx for idx, word in enumerate(vocab, 1)}  # 0 reserved for padding
+    vocab = set(word for split in ["train", "test"] for text in dataset[split]["text"] for word in text.split())
+    word_to_idx = {word: idx for idx, word in enumerate(vocab, 1)}
     word_to_idx["<PAD>"] = 0
 
     def tokenize(text: str) -> List[int]:
-        return [word_to_idx.get(word, 0) for word in text.split()[:500]]  # Limit to 500 words
+        return [word_to_idx.get(word, 0) for word in text.split()[:500]]
 
-    # Data preparation
-    train_data = [
-        (torch.tensor(tokenize(text)), label)
-        for text, label in zip(dataset["train"]["text"], dataset["train"]["label"])
-    ]
-    test_data = [
-        (torch.tensor(tokenize(text)), label)
-        for text, label in zip(dataset["test"]["text"], dataset["test"]["label"])
-    ]
+    train_data = [(tensor(tokenize(text)), label) for text, label in zip(dataset["train"]["text"], dataset["train"]["label"])]
+    test_data = [(tensor(tokenize(text)), label) for text, label in zip(dataset["test"]["text"], dataset["test"]["label"])]
 
-    # Split into sets
     train_dataset = train_data
     val_dataset, test_dataset = train_test_split(test_data, test_size=0.5, random_state=42)
 
-    # Create data loaders
-    train_loader = DataLoader(
-        train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=pad_collate
-    )
-    val_loader = DataLoader(
-        val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate
-    )
-    test_loader = DataLoader(
-        test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate
-    )
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=pad_collate)
+    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate)
 
     return train_loader, val_loader, test_loader
 
 
 def load_synthetic_ner_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
     """Load and prepare synthetic NER data."""
-    # Create simple synthetic NER dataset
     sentences = [
         "John lives in New York",
         "Apple Inc. is based in California",
@@ -127,26 +120,15 @@ def load_synthetic_ner_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
     ]
 
     words = set(word for sentence in sentences for word in sentence.split())
-    word2idx = {word: idx for idx, word in enumerate(words, 1)}  # 0 reserved for padding
+    word2idx = {word: idx for idx, word in enumerate(words, 1)}
     word2idx["<PAD>"] = 0
     tag2idx = {
-        "O": 0,
-        "B-PER": 1,
-        "I-PER": 2,
-        "B-LOC": 3,
-        "I-LOC": 4,
-        "B-ORG": 5,
-        "I-ORG": 6,
-        "B-MISC": 7,
-        "I-MISC": 8,
-        "<PAD>": 9,
+        "O": 0, "B-PER": 1, "I-PER": 2, "B-LOC": 3, "I-LOC": 4,
+        "B-ORG": 5, "I-ORG": 6, "B-MISC": 7, "I-MISC": 8, "<PAD>": 9,
     }
 
-    X = [[word2idx[word] for word in sentence.split()] for sentence in sentences]
-    y = [[tag2idx[tag] for tag in sentence_tags] for sentence_tags in tags]
-
-    X = [torch.tensor(sentence, dtype=torch.long) for sentence in X]
-    y = [torch.tensor(sentence_tags, dtype=torch.long) for sentence_tags in y]
+    X = [tensor([word2idx[word] for word in sentence.split()], dtype=long) for sentence in sentences]
+    y = [tensor([tag2idx[tag] for tag in sentence_tags], dtype=long) for sentence_tags in tags]
 
     dataset = list(zip(X, y))
 
@@ -154,19 +136,11 @@ def load_synthetic_ner_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
     val_size = int(0.15 * len(dataset))
     test_size = len(dataset) - train_size - val_size
 
-    train_dataset, val_dataset, test_dataset = random_split(
-        dataset, [train_size, val_size, test_size]
-    )
+    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
 
-    train_loader = DataLoader(
-        train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=pad_collate
-    )
-    val_loader = DataLoader(
-        val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate
-    )
-    test_loader = DataLoader(
-        test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate
-    )
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=pad_collate)
+    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate)
 
     return train_loader, val_loader, test_loader
 
@@ -182,10 +156,10 @@ def load_ucr_timeseries_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    X_train = torch.tensor(X_train, dtype=torch.float32)
-    y_train = torch.tensor(y_train, dtype=torch.long)
-    X_test = torch.tensor(X_test, dtype=torch.float32)
-    y_test = torch.tensor(y_test, dtype=torch.long)
+    X_train = tensor(X_train, dtype=float32)
+    y_train = tensor(y_train, dtype=long)
+    X_test = tensor(X_test, dtype=float32)
+    y_test = tensor(y_test, dtype=long)
 
     train_dataset = TensorDataset(X_train, y_train)
     test_dataset = TensorDataset(X_test, y_test)
@@ -206,104 +180,149 @@ def load_custom_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
 
 
 def prepare_data(X: np.ndarray, y: np.ndarray) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    """Prepare data for training, validation, and testing."""
-    X_train, X_temp, y_train, y_temp = train_test_split(
-        X, y, test_size=TEST_SIZE + VALIDATION_SIZE, random_state=42
-    )
-    X_val, X_test, y_val, y_test = train_test_split(
-        X_temp, y_temp, test_size=TEST_SIZE / (TEST_SIZE + VALIDATION_SIZE), random_state=42
-    )
+    """
+    Prepare data for training, validation, and testing.
+
+    Args:
+        X: Input features.
+        y: Target values.
+
+    Returns:
+        Tuple of train, validation, and test data loaders.
+    """
+    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=TEST_SIZE + VALIDATION_SIZE, random_state=42)
+    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=TEST_SIZE / (TEST_SIZE + VALIDATION_SIZE), random_state=42)
 
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_val = scaler.transform(X_val)
     X_test = scaler.transform(X_test)
 
-    X_train = torch.tensor(X_train, dtype=torch.float32)
-    X_val = torch.tensor(X_val, dtype=torch.float32)
-    X_test = torch.tensor(X_test, dtype=torch.float32)
-    y_train = torch.tensor(y_train, dtype=torch.float32)
-    y_val = torch.tensor(y_val, dtype=torch.float32)
-    y_test = torch.tensor(y_test, dtype=torch.float32)
+    X_train, X_val, X_test = map(lambda x: tensor(x, dtype=float32), (X_train, X_val, X_test))
+    y_train, y_val, y_test = map(lambda x: tensor(x, dtype=float32), (y_train, y_val, y_test))
 
     train_dataset = TensorDataset(X_train, y_train)
     val_dataset = TensorDataset(X_val, y_val)
     test_dataset = TensorDataset(X_test, y_test)
 
-    train_loader = DataLoader(
-        train_dataset, batch_size=BATCH_SIZE, shuffle=True, generator=GENERATOR
-    )
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, generator=GENERATOR)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
 
     return train_loader, val_loader, test_loader
 
 
-def create_val_test_loaders(dataset: torch.utils.data.Dataset) -> Tuple[DataLoader, DataLoader]:
-    """Create validation and test data loaders from a single dataset."""
+def create_val_test_loaders(dataset: TensorDataset) -> Tuple[DataLoader, DataLoader]:
+    """
+    Create validation and test data loaders from a single dataset.
+
+    Args:
+        dataset: The dataset to split.
+
+    Returns:
+        Tuple of validation and test data loaders.
+    """
     val_size = int(len(dataset) * VALIDATION_SIZE / (TEST_SIZE + VALIDATION_SIZE))
     test_size = len(dataset) - val_size
-    val_dataset, test_dataset = torch.utils.data.random_split(dataset, [val_size, test_size])
+    val_dataset, test_dataset = random_split(dataset, [val_size, test_size])
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
     return val_loader, test_loader
 
 
-def pad_collate(
-    batch: List[Tuple[torch.Tensor, torch.Tensor]]
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Pad and collate data for variable length sequences."""
+def pad_collate(batch: List[Tuple[Tensor, Tensor]]) -> Tuple[Tensor, Tensor]:
+    """
+    Pad and collate data for variable length sequences.
+
+    Args:
+        batch: A batch of data.
+
+    Returns:
+        Tuple of padded input sequences and labels.
+    """
     (xx, yy) = zip(*batch)
     x_lens = [len(x) for x in xx]
     max_len = max(x_lens)
 
-    xx_pad = torch.full((len(xx), max_len), 0, dtype=torch.long)
+    xx_pad = tensor([[0] * max_len for _ in range(len(xx))], dtype=long)
     for i, x in enumerate(xx):
         xx_pad[i, : len(x)] = x
 
-    yy = torch.tensor(yy)
+    yy = tensor(yy)
 
     return xx_pad.to(DEVICE), yy.to(DEVICE)
 
 
 def get_dataset_info(dataset_name: str) -> Dict[str, Any]:
-    """Get dataset configuration information."""
+    """
+    Get dataset configuration information.
+
+    Args:
+        dataset_name: Name of the dataset.
+
+    Returns:
+        Dictionary containing dataset configuration.
+
+    Raises:
+        ValueError: If the dataset is not supported.
+    """
     if dataset_name not in DATASET_CONFIGS:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
     return DATASET_CONFIGS[dataset_name]
 
 
 def get_problem_type(dataset_name: str) -> str:
-    """Get problem type for a given dataset."""
+    """
+    Get problem type for a given dataset.
+
+    Args:
+        dataset_name: Name of the dataset.
+
+    Returns:
+        Problem type (e.g., 'classification', 'regression').
+    """
     dataset_info = get_dataset_info(dataset_name)
     return dataset_info["problem_type"]
 
 
 def get_input_output_sizes(dataset_name: str) -> Tuple[int, int]:
-    """Get input and output sizes for a given dataset."""
+    """
+    Get input and output sizes for a given dataset.
+
+    Args:
+        dataset_name: Name of the dataset.
+
+    Returns:
+        Tuple of input size and output size.
+    """
     dataset_info = get_dataset_info(dataset_name)
     return dataset_info["input_size"], dataset_info["output_size"]
 
 
-def augment_image_data(
-    images: torch.Tensor, labels: torch.Tensor
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Augment image data with flips and rotations."""
+def augment_image_data(images: Tensor, labels: Tensor) -> Tuple[Tensor, Tensor]:
+    """
+    Augment image data with flips and rotations.
+
+    Args:
+        images: Input images.
+        labels: Corresponding labels.
+
+    Returns:
+        Tuple of augmented images and labels.
+    """
     augmented_images = []
     augmented_labels = []
     for image, label in zip(images, labels):
         augmented_images.append(image)
         augmented_labels.append(label)
 
-        # Horizontal flip
         if random.random() > 0.5:
-            augmented_images.append(torch.flip(image, [2]))
+            augmented_images.append(flip(image, [2]))
             augmented_labels.append(label)
 
-        # Random rotation
         if random.random() > 0.5:
             angle = random.uniform(-15, 15)
             augmented_images.append(transforms.functional.rotate(image, angle))
             augmented_labels.append(label)
 
-    return torch.stack(augmented_images), torch.stack(augmented_labels)
+    return stack(augmented_images), stack(augmented_labels)
