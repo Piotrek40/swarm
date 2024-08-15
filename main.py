@@ -1,10 +1,19 @@
+"""
+Main module for running NanoAI experiments.
+
+This module contains the main functionality for setting up and running
+experiments, as well as displaying and visualizing results.
+"""
+
 import sys
 import os
 import argparse
-import torch
 import random
+from typing import List, Dict, Any
+
 import numpy as np
-from typing import Dict, Any
+import torch
+from torch import Tensor
 
 from experiments.experiment_runner import run_experiments
 from utils.visualizer import Visualizer
@@ -13,7 +22,12 @@ from utils.logger import Logger
 
 
 def set_seed(seed: int) -> None:
-    """Set random seed for reproducibility."""
+    """
+    Set random seed for reproducibility.
+
+    Args:
+        seed (int): The seed value to use.
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -25,7 +39,12 @@ def set_seed(seed: int) -> None:
 
 
 def main(args: argparse.Namespace) -> None:
-    """Main function to run experiments."""
+    """
+    Main function to run experiments.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments.
+    """
     logger = Logger(os.path.join(LOG_DIR, "main_log"))
 
     try:
@@ -45,11 +64,9 @@ def main(args: argparse.Namespace) -> None:
         else:
             logger.log_event("Running in local environment")
 
-        configs = (
-            [config for config in EXPERIMENT_CONFIGS if config["dataset"] == args.dataset]
-            if args.dataset
-            else EXPERIMENT_CONFIGS
-        )
+        configs = [
+            config for config in EXPERIMENT_CONFIGS if config["dataset"] == args.dataset
+        ] if args.dataset else EXPERIMENT_CONFIGS
 
         results = run_experiments(configs)
 
@@ -59,17 +76,24 @@ def main(args: argparse.Namespace) -> None:
         else:
             logger.log_event("No results returned from experiments")
 
-    except Exception as e:
-        logger.log_error(f"An error occurred during experiments: {str(e)}")
-        import traceback
-
+    except RuntimeError as runtime_error:
+        logger.log_error(f"A runtime error occurred during experiments: {str(runtime_error)}")
+    except ValueError as value_error:
+        logger.log_error(f"A value error occurred during experiments: {str(value_error)}")
+    except Exception as exception:
+        logger.log_error(f"An unexpected error occurred during experiments: {str(exception)}")
         logger.log_error(traceback.format_exc())
     finally:
         logger.close()
 
 
 def display_results(results: List[Dict[str, Any]]) -> None:
-    """Display the results of the experiments."""
+    """
+    Display the results of the experiments.
+
+    Args:
+        results (List[Dict[str, Any]]): List of experiment results.
+    """
     print("\nExperiment Results:")
     for result in results:
         print(f"\nDataset: {result['dataset']}")
@@ -79,32 +103,37 @@ def display_results(results: List[Dict[str, Any]]) -> None:
         print(f"Best Model Complexity: {result['best_model_complexity']}")
         if "final_stats" in result:
             print("Final Population Stats:")
-            for key, value in result["final_stats"].items():
+            for key, value in result['final_stats'].items():
                 print(f"  {key}: {value}")
 
 
 def visualize_results(results: List[Dict[str, Any]]) -> None:
-    """Visualize the results of the experiments."""
+    """
+    Visualize the results of the experiments.
+
+    Args:
+        results (List[Dict[str, Any]]): List of experiment results.
+    """
     for result in results:
-        dataset_name = result["dataset"]
-        config_idx = EXPERIMENT_CONFIGS.index(result["config"])
+        dataset_name = result['dataset']
+        config_idx = EXPERIMENT_CONFIGS.index(result['config'])
 
         Visualizer.plot_model_complexity_distribution(
-            [result["best_model_complexity"]], dataset_name, config_idx
+            [result['best_model_complexity']], dataset_name, config_idx
         )
 
-        if result["test_metrics"].get("confusion_matrix") is not None:
+        if result['test_metrics'].get('confusion_matrix') is not None:
             Visualizer.plot_confusion_matrix(
-                result["test_metrics"]["confusion_matrix"],
-                list(range(result["config"]["output_size"])),
+                result['test_metrics']['confusion_matrix'],
+                list(range(result['config']['output_size'])),
                 dataset_name,
                 config_idx,
             )
 
-        if "feature_importance" in result:
+        if 'feature_importance' in result:
             Visualizer.plot_feature_importance(
-                result["feature_importance"],
-                [f"Feature {i}" for i in range(len(result["feature_importance"]))],
+                result['feature_importance'],
+                [f"Feature {i}" for i in range(len(result['feature_importance']))],
                 dataset_name,
                 config_idx,
             )
