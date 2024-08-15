@@ -1,27 +1,27 @@
 # Podstawowe biblioteki
 numpy>=1.19.2
-pandas==1.3.5          # Dopasowanie do Pythona 3.9 i innych bibliotek
-scipy==1.7.3           # Najnowsza wersja kompatybilna z Python 3.9
+pandas>=1.1.3
+scipy>=1.7.1
 
-# PyTorch i powiązane biblioteki
-torch==1.12.1+cpu      # Wersja PyTorch bez CUDA, odpowiednia dla środowisk bez GPU
-torchvision==0.13.1+cpu # Dopasowanie do wersji PyTorch
-torchaudio==0.12.1+cpu # Dopasowanie do wersji PyTorch
+# PyTorch i powiązane biblioteki z obsługą GPU
+torch==1.10.0+cu113  # cu113 indicates CUDA 11.3 support
+torchvision==0.11.2+cu113
+torchaudio==0.10.0+cu113
 
 # Biblioteki do przetwarzania danych i uczenia maszynowego
-scikit-learn==1.0.2    # Najnowsza wersja kompatybilna z Python 3.9
+scikit-learn==1.0.1
 tslearn==0.5.2
 
 # Biblioteki do wizualizacji
-matplotlib==3.5.3       # Ostatnia wersja wspierająca Python 3.9
+matplotlib>=3.3.4
 seaborn==0.11.2
 
 # Biblioteki do obróbki tekstu i NLP
 nltk==3.6.7
-transformers==4.12.5    # Ostatnia wersja wspierająca Python 3.9
+transformers==4.11.3
 
 # Biblioteki do obsługi różnych formatów danych
-h5py==3.7.0            # Aktualizacja dla lepszej kompatybilności
+h5py>=3.1.0
 jsonpickle==2.0.0
 
 # Biblioteki do efektywnego przetwarzania danych
@@ -32,7 +32,7 @@ graphviz==0.19.1
 torchviz==0.0.2
 
 # Biblioteki do logowania i monitorowania
-tensorboard==2.9.1     # Ostatnia wersja wspierająca Python 3.9
+tensorboard==2.7.0
 
 # Biblioteki do testowania
 pytest==6.2.5
