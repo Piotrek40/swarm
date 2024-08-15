@@ -44,7 +44,9 @@ class NanoModel(nn.Module):
         self.fitness = float("-inf")
         self.niche = None
 
-    def _create_mlp(self, input_size: int, hidden_sizes: List[int], output_size: int) -> nn.Sequential:
+    def _create_mlp(
+        self, input_size: int, hidden_sizes: List[int], output_size: int
+    ) -> nn.Sequential:
         """Create a Multi-Layer Perceptron."""
         layers = []
         in_features = input_size
@@ -56,7 +58,9 @@ class NanoModel(nn.Module):
         layers.append(nn.Linear(in_features, output_size))
         return nn.Sequential(*layers)
 
-    def _create_cnn(self, input_size: Tuple[int, int, int], hidden_sizes: List[int], output_size: int) -> nn.Sequential:
+    def _create_cnn(
+        self, input_size: Tuple[int, int, int], hidden_sizes: List[int], output_size: int
+    ) -> nn.Sequential:
         """Create a Convolutional Neural Network."""
         layers = []
         in_channels = input_size[0]
@@ -79,7 +83,9 @@ class NanoModel(nn.Module):
         )
         return nn.Sequential(*layers)
 
-    def _create_rnn(self, input_size: int, hidden_sizes: List[int], output_size: int) -> nn.Sequential:
+    def _create_rnn(
+        self, input_size: int, hidden_sizes: List[int], output_size: int
+    ) -> nn.Sequential:
         """Create a Recurrent Neural Network."""
         return nn.Sequential(
             nn.LSTM(input_size, hidden_sizes[0], num_layers=len(hidden_sizes), batch_first=True),
@@ -128,7 +134,7 @@ class NanoModel(nn.Module):
             print(f"Error during mutation: {str(e)}")
             raise
 
-    def clone(self) -> 'NanoModel':
+    def clone(self) -> "NanoModel":
         """
         Creates a deep copy of the model.
 
@@ -201,7 +207,7 @@ class NanoModel(nn.Module):
         }
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'NanoModel':
+    def from_config(cls, config: Dict[str, Any]) -> "NanoModel":
         """
         Creates a new instance of NanoModel from a configuration dictionary.
 
@@ -223,7 +229,7 @@ class NanoModel(nn.Module):
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'NanoModel':
+    def from_json(cls, json_str: str) -> "NanoModel":
         """
         Creates a new instance of NanoModel from a JSON string.
 
@@ -300,7 +306,7 @@ class SymbioticPair:
         """
         return self.model1.get_complexity() + self.model2.get_complexity()
 
-    def clone(self) -> 'SymbioticPair':
+    def clone(self) -> "SymbioticPair":
         """
         Creates a deep copy of the symbiotic pair.
 
@@ -309,7 +315,7 @@ class SymbioticPair:
         """
         return SymbioticPair(self.model1.clone(), self.model2.clone())
 
-    def to(self, device: torch.device) -> 'SymbioticPair':
+    def to(self, device: torch.device) -> "SymbioticPair":
         """
         Moves both models to the specified device.
 
@@ -343,7 +349,7 @@ class SymbioticPair:
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'SymbioticPair':
+    def from_json(cls, json_str: str) -> "SymbioticPair":
         """
         Creates a new instance of SymbioticPair from a JSON string.
 
