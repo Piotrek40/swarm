@@ -4,13 +4,23 @@ import argparse
 import torch
 import random
 import numpy as np
+from typing import Dict, Any
+
 from experiments.experiment_runner import run_experiments
 from utils.visualizer import Visualizer
-from config import EXPERIMENT_CONFIGS, IS_KAGGLE, IS_COLAB, DEVICE, LOG_DIR, RESULT_DIR
+from config import (
+    EXPERIMENT_CONFIGS,
+    IS_KAGGLE,
+    IS_COLAB,
+    DEVICE,
+    LOG_DIR,
+    RESULT_DIR
+)
 from utils.logger import Logger
 
 
-def set_seed(seed):
+def set_seed(seed: int) -> None:
+    """Set random seed for reproducibility."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -21,7 +31,8 @@ def set_seed(seed):
         torch.backends.cudnn.benchmark = False
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
+    """Main function to run experiments."""
     logger = Logger(os.path.join(LOG_DIR, "main_log"))
 
     try:
@@ -41,10 +52,7 @@ def main(args):
         else:
             logger.log_event("Running in local environment")
 
-        if args.dataset:
-            configs = [config for config in EXPERIMENT_CONFIGS if config["dataset"] == args.dataset]
-        else:
-            configs = EXPERIMENT_CONFIGS
+        configs = [config for config in EXPERIMENT_CONFIGS if config["dataset"] == args.dataset] if args.dataset else EXPERIMENT_CONFIGS
 
         results = run_experiments(configs)
 
@@ -57,13 +65,13 @@ def main(args):
     except Exception as e:
         logger.log_error(f"An error occurred during experiments: {str(e)}")
         import traceback
-
         logger.log_error(traceback.format_exc())
     finally:
         logger.close()
 
 
-def display_results(results):
+def display_results(results: List[Dict[str, Any]]) -> None:
+    """Display the results of the experiments."""
     print("\nExperiment Results:")
     for result in results:
         print(f"\nDataset: {result['dataset']}")
@@ -77,7 +85,8 @@ def display_results(results):
                 print(f"  {key}: {value}")
 
 
-def visualize_results(results):
+def visualize_results(results: List[Dict[str, Any]]) -> None:
+    """Visualize the results of the experiments."""
     for result in results:
         dataset_name = result["dataset"]
         config_idx = EXPERIMENT_CONFIGS.index(result["config"])
