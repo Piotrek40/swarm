@@ -1,25 +1,31 @@
-import torch
-import torch.nn as nn
-from typing import List, Dict, Any, Tuple
+"""Module containing NanoModel and SymbioticPair classes for flexible neural network models."""
+
+from typing import List, Dict, Any, Tuple, Union
+from torch import Tensor, device, rand, randn, norm, no_grad, tensor
+from torch.nn import Module, Sequential, Linear, ReLU, Dropout, Conv2d, MaxPool2d, Flatten, LSTM
 import jsonpickle
+
 from config import DEVICE, GENERATOR, DROPOUT_RATE
 
 
-class NanoModel(nn.Module):
+class NanoModel(Module):
     """
     A flexible neural network model that can be configured as MLP, CNN, or RNN.
 
     Args:
-        config (Dict[str, Any]): A dictionary containing the model configuration.
+        config: A dictionary containing the model configuration.
 
     Attributes:
-        model_type (str): The type of the model ('mlp', 'cnn', or 'rnn').
-        problem_type (str): The type of problem ('classification' or 'regression').
-        layers (nn.Sequential): The layers of the neural network.
+        model_type: The type of the model ('mlp', 'cnn', or 'rnn').
+        problem_type: The type of problem ('classification' or 'regression').
+        layers: The layers of the neural network.
+        epigenetic_marks: Dictionary to store epigenetic modifications.
+        fitness: The fitness score of the model.
+        niche: The niche of the model.
     """
 
     def __init__(self, config: Dict[str, Any]):
-        super(NanoModel, self).__init__()
+        super().__init__()
         self.model_type = config["model_type"]
         self.problem_type = config["problem_type"]
 
@@ -44,63 +50,52 @@ class NanoModel(nn.Module):
         self.fitness = float("-inf")
         self.niche = None
 
-    def _create_mlp(
-        self, input_size: int, hidden_sizes: List[int], output_size: int
-    ) -> nn.Sequential:
+    def _create_mlp(self, input_size: int, hidden_sizes: List[int], output_size: int) -> Sequential:
         """Create a Multi-Layer Perceptron."""
         layers = []
         in_features = input_size
         for hidden_size in hidden_sizes:
-            layers.extend(
-                [nn.Linear(in_features, hidden_size), nn.ReLU(), nn.Dropout(DROPOUT_RATE)]
-            )
+            layers.extend([Linear(in_features, hidden_size), ReLU(), Dropout(DROPOUT_RATE)])
             in_features = hidden_size
-        layers.append(nn.Linear(in_features, output_size))
-        return nn.Sequential(*layers)
+        layers.append(Linear(in_features, output_size))
+        return Sequential(*layers)
 
-    def _create_cnn(
-        self, input_size: Tuple[int, int, int], hidden_sizes: List[int], output_size: int
-    ) -> nn.Sequential:
+    def _create_cnn(self, input_size: Tuple[int, int, int], hidden_sizes: List[int], output_size: int) -> Sequential:
         """Create a Convolutional Neural Network."""
         layers = []
         in_channels = input_size[0]
         for hidden_size in hidden_sizes:
-            layers.extend(
-                [
-                    nn.Conv2d(in_channels, hidden_size, kernel_size=3, padding=1),
-                    nn.ReLU(),
-                    nn.MaxPool2d(2),
-                ]
-            )
+            layers.extend([
+                Conv2d(in_channels, hidden_size, kernel_size=3, padding=1),
+                ReLU(),
+                MaxPool2d(2),
+            ])
             in_channels = hidden_size
-        layers.extend(
-            [
-                nn.Flatten(),
-                nn.Linear(
-                    hidden_sizes[-1] * (input_size[1] // 8) * (input_size[2] // 8), output_size
-                ),
-            ]
-        )
-        return nn.Sequential(*layers)
+        layers.extend([
+            Flatten(),
+            Linear(hidden_sizes[-1] * (input_size[1] // 8) * (input_size[2] // 8), output_size),
+        ])
+        return Sequential(*layers)
 
-    def _create_rnn(
-        self, input_size: int, hidden_sizes: List[int], output_size: int
-    ) -> nn.Sequential:
+    def _create_rnn(self, input_size: int, hidden_sizes: List[int], output_size: int) -> Sequential:
         """Create a Recurrent Neural Network."""
-        return nn.Sequential(
-            nn.LSTM(input_size, hidden_sizes[0], num_layers=len(hidden_sizes), batch_first=True),
-            nn.Linear(hidden_sizes[0], output_size),
+        return Sequential(
+            LSTM(input_size, hidden_sizes[0], num_layers=len(hidden_sizes), batch_first=True),
+            Linear(hidden_sizes[0], output_size),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """
-        Defines the computation performed at every call.
+        Define the computation performed at every call.
 
         Args:
-            x (torch.Tensor): The input tensor.
+            x: The input tensor.
 
         Returns:
-            torch.Tensor: The output of the model.
+            The output of the model.
+
+        Raises:
+            RuntimeError: If an error occurs during the forward pass.
         """
         try:
             if self.model_type == "rnn":
@@ -109,37 +104,35 @@ class NanoModel(nn.Module):
             else:
                 x = self.layers(x)
             return x
-        except Exception as e:
+        except RuntimeError as e:
             print(f"Error in forward pass: {str(e)}")
             raise
 
     def mutate(self, mutation_rate: float) -> None:
         """
-        Applies mutation to the model parameters.
+        Apply mutation to the model parameters.
 
         Args:
-            mutation_rate (float): The probability of mutating each parameter.
+            mutation_rate: The probability of mutating each parameter.
+
+        Raises:
+            RuntimeError: If an error occurs during mutation.
         """
         try:
-            with torch.no_grad():
+            with no_grad():
                 for param in self.parameters():
-                    mask = (
-                        torch.rand(param.shape, generator=GENERATOR).to(param.device)
-                        < mutation_rate
-                    )
-                    param.data += (
-                        torch.randn(param.shape, generator=GENERATOR).to(param.device) * mask * 0.1
-                    )
-        except Exception as e:
+                    mask = (rand(param.shape, generator=GENERATOR).to(param.device) < mutation_rate)
+                    param.data += randn(param.shape, generator=GENERATOR).to(param.device) * mask * 0.1
+        except RuntimeError as e:
             print(f"Error during mutation: {str(e)}")
             raise
 
-    def clone(self) -> "NanoModel":
+    def clone(self) -> 'NanoModel':
         """
-        Creates a deep copy of the model.
+        Create a deep copy of the model.
 
         Returns:
-            NanoModel: A new instance with the same parameters and attributes.
+            A new instance with the same parameters and attributes.
         """
         clone = NanoModel(self.get_config())
         clone.load_state_dict(self.state_dict())
@@ -150,38 +143,38 @@ class NanoModel(nn.Module):
 
     def get_complexity(self) -> int:
         """
-        Calculates the complexity of the model.
+        Calculate the complexity of the model.
 
         Returns:
-            int: The total number of parameters in the model.
+            The total number of parameters in the model.
         """
         return sum(p.numel() for p in self.parameters())
 
     def apply_epigenetic_modification(self, modification: str) -> None:
         """
-        Applies an epigenetic modification to the model.
+        Apply an epigenetic modification to the model.
 
         Args:
-            modification (str): The type of modification to apply.
+            modification: The type of modification to apply.
         """
         self.epigenetic_marks[modification] = True
 
     def reset_epigenetic_modifications(self) -> None:
-        """Resets all epigenetic modifications."""
+        """Reset all epigenetic modifications."""
         self.epigenetic_marks.clear()
 
     def random_modification(self) -> None:
-        """Applies a random modification to the model parameters."""
-        with torch.no_grad():
+        """Apply a random modification to the model parameters."""
+        with no_grad():
             for param in self.parameters():
-                param.data += torch.randn_like(param) * 0.01
+                param.data += randn_like(param) * 0.01
 
     def get_config(self) -> Dict[str, Any]:
         """
-        Returns the configuration of the model.
+        Get the configuration of the model.
 
         Returns:
-            Dict[str, Any]: The model configuration.
+            The model configuration.
         """
         if self.model_type == "mlp":
             input_size = self.layers[0].in_features
@@ -189,9 +182,7 @@ class NanoModel(nn.Module):
             output_size = self.layers[-1].out_features
         elif self.model_type == "cnn":
             input_size = (self.layers[0].in_channels, 32, 32)  # Assuming CIFAR10
-            hidden_sizes = [
-                layer.out_channels for layer in self.layers if isinstance(layer, nn.Conv2d)
-            ]
+            hidden_sizes = [layer.out_channels for layer in self.layers if isinstance(layer, Conv2d)]
             output_size = self.layers[-1].out_features
         else:  # RNN
             input_size = self.layers[0].input_size
@@ -207,65 +198,65 @@ class NanoModel(nn.Module):
         }
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> "NanoModel":
+    def from_config(cls, config: Dict[str, Any]) -> 'NanoModel':
         """
-        Creates a new instance of NanoModel from a configuration dictionary.
+        Create a new instance of NanoModel from a configuration dictionary.
 
         Args:
-            config (Dict[str, Any]): The model configuration.
+            config: The model configuration.
 
         Returns:
-            NanoModel: A new instance of NanoModel.
+            A new instance of NanoModel.
         """
         return cls(config)
 
     def to_json(self) -> str:
         """
-        Serializes the model to a JSON string.
+        Serialize the model to a JSON string.
 
         Returns:
-            str: A JSON representation of the model.
+            A JSON representation of the model.
         """
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str: str) -> "NanoModel":
+    def from_json(cls, json_str: str) -> 'NanoModel':
         """
-        Creates a new instance of NanoModel from a JSON string.
+        Create a new instance of NanoModel from a JSON string.
 
         Args:
-            json_str (str): A JSON representation of the model.
+            json_str: A JSON representation of the model.
 
         Returns:
-            NanoModel: A new instance of NanoModel.
+            A new instance of NanoModel.
         """
         return jsonpickle.decode(json_str)
 
-    def get_l2_regularization(self) -> torch.Tensor:
+    def get_l2_regularization(self) -> Tensor:
         """
-        Calculates the L2 regularization term for the model parameters.
+        Calculate the L2 regularization term for the model parameters.
 
         Returns:
-            torch.Tensor: The L2 regularization term.
+            The L2 regularization term.
         """
-        l2_reg = torch.tensor(0.0, device=DEVICE)
+        l2_reg = tensor(0.0, device=DEVICE)
         for param in self.parameters():
-            l2_reg += torch.norm(param)
+            l2_reg += norm(param)
         return l2_reg
 
 
 class SymbioticPair:
     """
-    Represents a pair of NanoModels that work together symbiotically.
+    Represent a pair of NanoModels that work together symbiotically.
 
     Args:
-        model1 (NanoModel): The first model in the pair.
-        model2 (NanoModel): The second model in the pair.
+        model1: The first model in the pair.
+        model2: The second model in the pair.
 
     Attributes:
-        model1 (NanoModel): The first model in the pair.
-        model2 (NanoModel): The second model in the pair.
-        fitness (float): The fitness of the symbiotic pair.
+        model1: The first model in the pair.
+        model2: The second model in the pair.
+        fitness: The fitness of the symbiotic pair.
     """
 
     def __init__(self, model1: NanoModel, model2: NanoModel):
@@ -273,15 +264,15 @@ class SymbioticPair:
         self.model2 = model2
         self.fitness = float("-inf")
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """
-        Performs a forward pass through both models and combines their outputs.
+        Perform a forward pass through both models and combine their outputs.
 
         Args:
-            x (torch.Tensor): The input tensor.
+            x: The input tensor.
 
         Returns:
-            torch.Tensor: The combined output of both models.
+            The combined output of both models.
         """
         out1 = self.model1(x)
         out2 = self.model2(x)
@@ -289,74 +280,74 @@ class SymbioticPair:
 
     def mutate(self, mutation_rate: float) -> None:
         """
-        Applies mutation to both models in the pair.
+        Apply mutation to both models in the pair.
 
         Args:
-            mutation_rate (float): The probability of mutating each parameter.
+            mutation_rate: The probability of mutating each parameter.
         """
         self.model1.mutate(mutation_rate)
         self.model2.mutate(mutation_rate)
 
     def get_complexity(self) -> int:
         """
-        Calculates the total complexity of the symbiotic pair.
+        Calculate the total complexity of the symbiotic pair.
 
         Returns:
-            int: The sum of complexities of both models.
+            The sum of complexities of both models.
         """
         return self.model1.get_complexity() + self.model2.get_complexity()
 
-    def clone(self) -> "SymbioticPair":
+    def clone(self) -> 'SymbioticPair':
         """
-        Creates a deep copy of the symbiotic pair.
+        Create a deep copy of the symbiotic pair.
 
         Returns:
-            SymbioticPair: A new instance with clones of both models.
+            A new instance with clones of both models.
         """
         return SymbioticPair(self.model1.clone(), self.model2.clone())
 
-    def to(self, device: torch.device) -> "SymbioticPair":
+    def to(self, device: device) -> 'SymbioticPair':
         """
-        Moves both models to the specified device.
+        Move both models to the specified device.
 
         Args:
-            device (torch.device): The device to move the models to.
+            device: The device to move the models to.
 
         Returns:
-            SymbioticPair: The symbiotic pair with models on the specified device.
+            The symbiotic pair with models on the specified device.
         """
         self.model1.to(device)
         self.model2.to(device)
         return self
 
     def eval(self) -> None:
-        """Sets both models to evaluation mode."""
+        """Set both models to evaluation mode."""
         self.model1.eval()
         self.model2.eval()
 
     def train(self) -> None:
-        """Sets both models to training mode."""
+        """Set both models to training mode."""
         self.model1.train()
         self.model2.train()
 
     def to_json(self) -> str:
         """
-        Serializes the symbiotic pair to a JSON string.
+        Serialize the symbiotic pair to a JSON string.
 
         Returns:
-            str: A JSON representation of the symbiotic pair.
+            A JSON representation of the symbiotic pair.
         """
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str: str) -> "SymbioticPair":
+    def from_json(cls, json_str: str) -> 'SymbioticPair':
         """
-        Creates a new instance of SymbioticPair from a JSON string.
+        Create a new instance of SymbioticPair from a JSON string.
 
         Args:
-            json_str (str): A JSON representation of the symbiotic pair.
+            json_str: A JSON representation of the symbiotic pair.
 
         Returns:
-            SymbioticPair: A new instance of SymbioticPair.
+            A new instance of SymbioticPair.
         """
         return jsonpickle.decode(json_str)
