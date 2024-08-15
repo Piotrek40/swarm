@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -16,7 +18,22 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-    - name: Run Black
+    - name: Fix nano_model.py
+      run: |
+        sed -i 's/Returns:/Returns: NanoModel/' models/nano_model.py
+    - name: Run Black and commit changes
+      run: |
+        black .
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add -A
+        git diff-index --quiet HEAD || git commit -m "Apply automatic formatting changes"
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
+    - name: Run Black check
       run: black --check .
     - name: Run Pylint
       run: pylint **/*.py
