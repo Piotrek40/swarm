@@ -342,7 +342,7 @@ class SymbioticPair:
         """
         return jsonpickle.encode(self)
 
-   @classmethod
+    @classmethod
     def from_json(cls, json_str: str) -> 'NanoModel':
         """
         Creates a new instance of NanoModel from a JSON string.
