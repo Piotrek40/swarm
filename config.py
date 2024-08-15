@@ -1,11 +1,11 @@
 import os
 import torch
 
-# Środowisko
+# Environment
 IS_KAGGLE = "KAGGLE_KERNEL_RUN_TYPE" in os.environ
 IS_COLAB = "COLAB_GPU" in os.environ
 
-# Ścieżki
+# Paths
 BASE_DIR = "/kaggle/working" if IS_KAGGLE else os.path.dirname(os.path.abspath(__file__))
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 RESULT_DIR = os.path.join(BASE_DIR, "results")
@@ -15,7 +15,7 @@ CHECKPOINT_DIR = os.path.join(BASE_DIR, "checkpoints")
 for dir_path in [LOG_DIR, RESULT_DIR, DATA_DIR, CHECKPOINT_DIR]:
     os.makedirs(dir_path, exist_ok=True)
 
-# Sprzęt
+# Hardware
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 USE_AMP = torch.cuda.is_available()
 
@@ -25,16 +25,16 @@ if DEVICE.type == "cuda":
     print(f"Memory Allocated: {torch.cuda.memory_allocated(0) / 1024**2:.2f} MB")
     print(f"Memory Cached: {torch.cuda.memory_cached(0) / 1024**2:.2f} MB")
 
-# Generator losowy
+# Random generator
 GENERATOR = torch.Generator()
 GENERATOR.manual_seed(42)
 
-# Parametry uczenia
+# Learning parameters
 LEARNING_RATE = 0.001
 WEIGHT_DECAY = 0.0001
 DROPOUT_RATE = 0.3
 
-# Parametry ewolucyjne
+# Evolutionary parameters
 INITIAL_MUTATION_RATE = 0.03
 MUTATION_RATE_RANGE = (0.01, 0.1)
 INITIAL_CROSSOVER_RATE = 0.7
@@ -46,7 +46,7 @@ GENETIC_DRIFT_PROBABILITY = 0.005
 SYMBIOSIS_PROBABILITY = 0.15
 EPIGENETIC_RESET_PROBABILITY = 0.1
 
-# Parametry populacji
+# Population parameters
 INITIAL_POPULATION_SIZE = 200
 MAX_POPULATION_SIZE = 1000
 NUM_SUBPOPULATIONS = 5
@@ -59,7 +59,7 @@ NICHE_SPECIALIZATIONS = [
 ]
 ENVIRONMENT_CONDITIONS = ["normal", "challenging", "extreme", "variable"]
 
-# Parametry eksperymentów
+# Experiment parameters
 REPORT_INTERVAL = 10
 MAX_GENERATIONS = 1000
 EARLY_STOPPING_PATIENCE = 20
@@ -68,7 +68,7 @@ TEST_SIZE = 0.2
 VALIDATION_SIZE = 0.2
 CHECKPOINT_INTERVAL = 50
 
-# Konfiguracje zbiorów danych
+# Dataset configurations
 DATASET_CONFIGS = {
     "iris": {
         "input_size": 4,
@@ -112,8 +112,8 @@ EXPERIMENT_CONFIGS = [
     for dataset in DATASET_CONFIGS.keys()
 ]
 
-# Parametry regularyzacji
+# Regularization parameters
 L2_LAMBDA = 0.01
 
-# Parametry równoległości
+# Parallelism parameters
 NUM_PROCESSES = 4
