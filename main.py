@@ -64,9 +64,11 @@ def main(args: argparse.Namespace) -> None:
         else:
             logger.log_event("Running in local environment")
 
-        configs = [
-            config for config in EXPERIMENT_CONFIGS if config["dataset"] == args.dataset
-        ] if args.dataset else EXPERIMENT_CONFIGS
+        configs = (
+            [config for config in EXPERIMENT_CONFIGS if config["dataset"] == args.dataset]
+            if args.dataset
+            else EXPERIMENT_CONFIGS
+        )
 
         results = run_experiments(configs)
 
@@ -103,7 +105,7 @@ def display_results(results: List[Dict[str, Any]]) -> None:
         print(f"Best Model Complexity: {result['best_model_complexity']}")
         if "final_stats" in result:
             print("Final Population Stats:")
-            for key, value in result['final_stats'].items():
+            for key, value in result["final_stats"].items():
                 print(f"  {key}: {value}")
 
 
@@ -115,25 +117,25 @@ def visualize_results(results: List[Dict[str, Any]]) -> None:
         results (List[Dict[str, Any]]): List of experiment results.
     """
     for result in results:
-        dataset_name = result['dataset']
-        config_idx = EXPERIMENT_CONFIGS.index(result['config'])
+        dataset_name = result["dataset"]
+        config_idx = EXPERIMENT_CONFIGS.index(result["config"])
 
         Visualizer.plot_model_complexity_distribution(
-            [result['best_model_complexity']], dataset_name, config_idx
+            [result["best_model_complexity"]], dataset_name, config_idx
         )
 
-        if result['test_metrics'].get('confusion_matrix') is not None:
+        if result["test_metrics"].get("confusion_matrix") is not None:
             Visualizer.plot_confusion_matrix(
-                result['test_metrics']['confusion_matrix'],
-                list(range(result['config']['output_size'])),
+                result["test_metrics"]["confusion_matrix"],
+                list(range(result["config"]["output_size"])),
                 dataset_name,
                 config_idx,
             )
 
-        if 'feature_importance' in result:
+        if "feature_importance" in result:
             Visualizer.plot_feature_importance(
-                result['feature_importance'],
-                [f"Feature {i}" for i in range(len(result['feature_importance']))],
+                result["feature_importance"],
+                [f"Feature {i}" for i in range(len(result["feature_importance"]))],
                 dataset_name,
                 config_idx,
             )

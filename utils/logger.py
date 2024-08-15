@@ -164,7 +164,9 @@ class Logger:
         summary = str(model)
         self._log_event(f"Model Summary:\n{summary}", level=logging.INFO)
 
-    def log_dataset_info(self, dataset_name: str, train_size: int, val_size: int, test_size: int) -> None:
+    def log_dataset_info(
+        self, dataset_name: str, train_size: int, val_size: int, test_size: int
+    ) -> None:
         """
         Log information about the dataset.
 

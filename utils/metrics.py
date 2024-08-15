@@ -8,9 +8,7 @@ from torch import Tensor, nn, stack, mean
 from torch.types import Number
 
 
-def calculate_metrics(
-    outputs: Tensor, targets: Tensor, problem_type: str
-) -> Dict[str, float]:
+def calculate_metrics(outputs: Tensor, targets: Tensor, problem_type: str) -> Dict[str, float]:
     """
     Calculate various metrics based on the problem type.
 
@@ -92,7 +90,7 @@ def calculate_ensemble_performance(
     return calculate_metrics(ensemble_output, targets, problem_type)
 
 
-def track_fitness_over_time(swarm: 'EvolutionarySwarm', generations: int) -> List[Number]:
+def track_fitness_over_time(swarm: "EvolutionarySwarm", generations: int) -> List[Number]:
     """
     Track the best fitness of a swarm over multiple generations.
 

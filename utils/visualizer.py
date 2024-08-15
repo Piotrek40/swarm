@@ -150,8 +150,12 @@ class Visualizer:
         """
         plt.figure(figsize=(10, 8))
         sns.heatmap(
-            confusion_matrix, annot=True, fmt="d", cmap="Blues", 
-            xticklabels=class_names, yticklabels=class_names
+            confusion_matrix,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=class_names,
+            yticklabels=class_names,
         )
         plt.title(f"Confusion Matrix - {dataset_name} (Config {config_idx})")
         plt.xlabel("Predicted")
