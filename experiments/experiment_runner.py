@@ -1,8 +1,11 @@
+"""Experiment runner for NanoAI."""
+
 import torch
 import os
 import time
 import json
 import csv
+from typing import List, Dict, Any, Tuple
 from models.swarm import EvolutionarySwarm
 from utils.logger import Logger
 from utils.data_loader import load_data, get_dataset_info
@@ -16,7 +19,16 @@ from utils.visualizer import Visualizer
 from config import *
 
 
-def run_experiments(experiment_configs):
+def run_experiments(experiment_configs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Run experiments based on the provided configurations.
+
+    Args:
+        experiment_configs (List[Dict[str, Any]]): List of experiment configurations.
+
+    Returns:
+        List[Dict[str, Any]]: Results of all experiments.
+    """
     logger = Logger(os.path.join(LOG_DIR, "experiments"))
     all_results = []
 
@@ -60,7 +72,7 @@ def run_experiments(experiment_configs):
                                 if hasattr(torch.cuda, "empty_cache"):
                                     torch.cuda.empty_cache()
                             else:
-                                raise e
+                                raise
 
                     val_loss, val_metrics = validate(
                         swarm, val_loader, dataset_config["problem_type"]
@@ -162,7 +174,18 @@ def run_experiments(experiment_configs):
     return all_results
 
 
-def validate(swarm, data_loader, problem_type):
+def validate(swarm: EvolutionarySwarm, data_loader: torch.utils.data.DataLoader, problem_type: str) -> Tuple[float, Dict[str, float]]:
+    """
+    Validate the swarm's best model on a given data loader.
+
+    Args:
+        swarm (EvolutionarySwarm): The swarm to validate.
+        data_loader (torch.utils.data.DataLoader): The data loader for validation.
+        problem_type (str): The type of problem (classification or regression).
+
+    Returns:
+        Tuple[float, Dict[str, float]]: The validation loss and metrics.
+    """
     total_loss = 0
     all_outputs = []
     all_targets = []
@@ -190,19 +213,46 @@ def validate(swarm, data_loader, problem_type):
     return total_loss / len(data_loader), metrics
 
 
-def save_best_model(swarm, dataset_name, config_idx):
+def save_best_model(swarm: EvolutionarySwarm, dataset_name: str, config_idx: int) -> None:
+    """
+    Save the best model from the swarm.
+
+    Args:
+        swarm (EvolutionarySwarm): The swarm containing the best model.
+        dataset_name (str): Name of the dataset.
+        config_idx (int): Index of the configuration.
+    """
     best_model_path = os.path.join(RESULT_DIR, f"best_model_{dataset_name}_config_{config_idx}.pth")
     torch.save(swarm.get_best_model().state_dict(), best_model_path)
 
 
-def save_checkpoint(swarm, dataset_name, config_idx, generation):
+def save_checkpoint(swarm: EvolutionarySwarm, dataset_name: str, config_idx: int, generation: int) -> None:
+    """
+    Save a checkpoint of the swarm.
+
+    Args:
+        swarm (EvolutionarySwarm): The swarm to save.
+        dataset_name (str): Name of the dataset.
+        config_idx (int): Index of the configuration.
+        generation (int): Current generation number.
+    """
     checkpoint_path = os.path.join(
         CHECKPOINT_DIR, f"checkpoint_{dataset_name}_config_{config_idx}_gen_{generation}.pth"
     )
     swarm.save_checkpoint(checkpoint_path)
 
 
-def save_partial_results(file_path, generation, val_loss, stats, metrics):
+def save_partial_results(file_path: str, generation: int, val_loss: float, stats: Dict[str, Any], metrics: Dict[str, float]) -> None:
+    """
+    Save partial results during the experiment.
+
+    Args:
+        file_path (str): Path to save the partial results.
+        generation (int): Current generation number.
+        val_loss (float): Validation loss.
+        stats (Dict[str, Any]): Statistics of the swarm.
+        metrics (Dict[str, float]): Validation metrics.
+    """
     try:
         with open(file_path, "a") as f:
             json.dump(
@@ -213,7 +263,14 @@ def save_partial_results(file_path, generation, val_loss, stats, metrics):
         logger.log_error(f"Error saving partial results: {str(e)}")
 
 
-def save_final_results(file_path, result):
+def save_final_results(file_path: str, result: Dict[str, Any]) -> None:
+    """
+    Save final results of the experiment.
+
+    Args:
+        file_path (str): Path to save the final results.
+        result (Dict[str, Any]): Final results of the experiment.
+    """
     try:
         with open(file_path, "w") as f:
             json.dump(result, f, indent=4)
@@ -221,7 +278,14 @@ def save_final_results(file_path, result):
         logger.log_error(f"Error saving final results: {str(e)}")
 
 
-def save_experiment_summary(file_path, all_results):
+def save_experiment_summary(file_path: str, all_results: List[Dict[str, Any]]) -> None:
+    """
+    Save a summary of all experiments.
+
+    Args:
+        file_path (str): Path to save the experiment summary.
+        all_results (List[Dict[str, Any]]): Results of all experiments.
+    """
     try:
         with open(file_path, "w", newline="") as f:
             writer = csv.DictWriter(
@@ -242,7 +306,17 @@ def save_experiment_summary(file_path, all_results):
         logger.log_error(f"Error saving experiment summary: {str(e)}")
 
 
-def continue_experiment(checkpoint_path, config):
+def continue_experiment(checkpoint_path: str, config: Dict[str, Any]) -> EvolutionarySwarm:
+    """
+    Continue an experiment from a checkpoint.
+
+    Args:
+        checkpoint_path (str): Path to the checkpoint file.
+        config (Dict[str, Any]): Configuration for the experiment.
+
+    Returns:
+        EvolutionarySwarm: The loaded swarm from the checkpoint.
+    """
     try:
         swarm = EvolutionarySwarm(
             dataset_config=get_dataset_info(config["dataset"]),
@@ -255,7 +329,20 @@ def continue_experiment(checkpoint_path, config):
         raise
 
 
-def train_step(swarm, optimizer, data, targets, l2_lambda=L2_LAMBDA):
+def train_step(swarm: EvolutionarySwarm, optimizer: torch.optim.Optimizer, data: torch.Tensor, targets: torch.Tensor, l2_lambda: float = L2_LAMBDA) -> float:
+    """
+    Perform a single training step.
+
+    Args:
+        swarm (EvolutionarySwarm): The swarm to train.
+        optimizer (torch.optim.Optimizer): The optimizer to use.
+        data (torch.Tensor): Input data.
+        targets (torch.Tensor): Target values.
+        l2_lambda (float): L2 regularization coefficient.
+
+    Returns:
+        float: The loss value for this training step.
+    """
     try:
         optimizer.zero_grad()
         best_model = swarm.get_best_model()
