@@ -2,6 +2,7 @@ import torch
 from models.swarm import EvolutionarySwarm
 from config import DEVICE, DATASET_CONFIGS, INITIAL_POPULATION_SIZE
 
+
 class SwarmFactory:
     def __init__(self, dataset_name):
         if dataset_name not in DATASET_CONFIGS:
@@ -16,8 +17,7 @@ class SwarmFactory:
             return self.swarm_cache[config_key].clone()
 
         swarm = EvolutionarySwarm(
-            dataset_config=self.dataset_config,
-            initial_population_size=population_size
+            dataset_config=self.dataset_config, initial_population_size=population_size
         )
         self.swarm_cache[config_key] = swarm
         return swarm
@@ -45,19 +45,25 @@ class SwarmFactory:
     def load_metadata(self, path):
         self.metadata = torch.load(path)
 
-    def create_custom_swarm(self, input_size, hidden_sizes, output_size, model_type, problem_type, population_size):
+    def create_custom_swarm(
+        self, input_size, hidden_sizes, output_size, model_type, problem_type, population_size
+    ):
         custom_config = {
-            'input_size': input_size,
-            'hidden_sizes': hidden_sizes,
-            'output_size': output_size,
-            'model_type': model_type,
-            'problem_type': problem_type
+            "input_size": input_size,
+            "hidden_sizes": hidden_sizes,
+            "output_size": output_size,
+            "model_type": model_type,
+            "problem_type": problem_type,
         }
-        return EvolutionarySwarm(dataset_config=custom_config, initial_population_size=population_size)
+        return EvolutionarySwarm(
+            dataset_config=custom_config, initial_population_size=population_size
+        )
+
 
 def create_swarm_for_dataset(dataset_name, population_size=INITIAL_POPULATION_SIZE):
     factory = SwarmFactory(dataset_name)
     return factory.create_swarm(population_size)
+
 
 def get_swarm_factory(dataset_name):
     return SwarmFactory(dataset_name)

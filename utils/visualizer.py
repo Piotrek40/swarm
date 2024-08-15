@@ -5,6 +5,7 @@ from config import RESULT_DIR
 import os
 import torch
 
+
 class Visualizer:
     @staticmethod
     def plot_fitness_over_time(generations, fitness_values, dataset_name, config_idx):
@@ -19,10 +20,12 @@ class Visualizer:
         """
         plt.figure(figsize=(10, 6))
         plt.plot(generations, fitness_values)
-        plt.title(f'Fitness over Generations - {dataset_name} (Config {config_idx})')
-        plt.xlabel('Generation')
-        plt.ylabel('Fitness')
-        plt.savefig(os.path.join(RESULT_DIR, f'fitness_plot_{dataset_name}_config_{config_idx}.png'))
+        plt.title(f"Fitness over Generations - {dataset_name} (Config {config_idx})")
+        plt.xlabel("Generation")
+        plt.ylabel("Fitness")
+        plt.savefig(
+            os.path.join(RESULT_DIR, f"fitness_plot_{dataset_name}_config_{config_idx}.png")
+        )
         plt.close()
 
     @staticmethod
@@ -37,10 +40,12 @@ class Visualizer:
         """
         plt.figure(figsize=(10, 6))
         plt.plot(range(len(diversity_values)), diversity_values)
-        plt.title(f'Population Diversity - {dataset_name} (Config {config_idx})')
-        plt.xlabel('Generation')
-        plt.ylabel('Diversity')
-        plt.savefig(os.path.join(RESULT_DIR, f'diversity_plot_{dataset_name}_config_{config_idx}.png'))
+        plt.title(f"Population Diversity - {dataset_name} (Config {config_idx})")
+        plt.xlabel("Generation")
+        plt.ylabel("Diversity")
+        plt.savefig(
+            os.path.join(RESULT_DIR, f"diversity_plot_{dataset_name}_config_{config_idx}.png")
+        )
         plt.close()
 
     @staticmethod
@@ -56,10 +61,12 @@ class Visualizer:
         """
         plt.figure(figsize=(10, 6))
         plt.scatter(objective1_values, objective2_values)
-        plt.title(f'Pareto Front - {dataset_name} (Config {config_idx})')
-        plt.xlabel('Objective 1')
-        plt.ylabel('Objective 2')
-        plt.savefig(os.path.join(RESULT_DIR, f'pareto_front_{dataset_name}_config_{config_idx}.png'))
+        plt.title(f"Pareto Front - {dataset_name} (Config {config_idx})")
+        plt.xlabel("Objective 1")
+        plt.ylabel("Objective 2")
+        plt.savefig(
+            os.path.join(RESULT_DIR, f"pareto_front_{dataset_name}_config_{config_idx}.png")
+        )
         plt.close()
 
     @staticmethod
@@ -74,10 +81,14 @@ class Visualizer:
         """
         plt.figure(figsize=(10, 6))
         sns.histplot(complexities, kde=True)
-        plt.title(f'Model Complexity Distribution - {dataset_name} (Config {config_idx})')
-        plt.xlabel('Complexity (Number of Parameters)')
-        plt.ylabel('Frequency')
-        plt.savefig(os.path.join(RESULT_DIR, f'complexity_distribution_{dataset_name}_config_{config_idx}.png'))
+        plt.title(f"Model Complexity Distribution - {dataset_name} (Config {config_idx})")
+        plt.xlabel("Complexity (Number of Parameters)")
+        plt.ylabel("Frequency")
+        plt.savefig(
+            os.path.join(
+                RESULT_DIR, f"complexity_distribution_{dataset_name}_config_{config_idx}.png"
+            )
+        )
         plt.close()
 
     @staticmethod
@@ -92,13 +103,15 @@ class Visualizer:
             config_idx (int): Index of the configuration.
         """
         plt.figure(figsize=(10, 6))
-        plt.plot(range(len(train_losses)), train_losses, label='Train Loss')
-        plt.plot(range(len(val_losses)), val_losses, label='Validation Loss')
-        plt.title(f'Learning Curves - {dataset_name} (Config {config_idx})')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
+        plt.plot(range(len(train_losses)), train_losses, label="Train Loss")
+        plt.plot(range(len(val_losses)), val_losses, label="Validation Loss")
+        plt.title(f"Learning Curves - {dataset_name} (Config {config_idx})")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
         plt.legend()
-        plt.savefig(os.path.join(RESULT_DIR, f'learning_curves_{dataset_name}_config_{config_idx}.png'))
+        plt.savefig(
+            os.path.join(RESULT_DIR, f"learning_curves_{dataset_name}_config_{config_idx}.png")
+        )
         plt.close()
 
     @staticmethod
@@ -113,11 +126,15 @@ class Visualizer:
             config_idx (int): Index of the configuration.
         """
         plt.figure(figsize=(10, 8))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
-        plt.title(f'Confusion Matrix - {dataset_name} (Config {config_idx})')
-        plt.xlabel('Predicted')
-        plt.ylabel('True')
-        plt.savefig(os.path.join(RESULT_DIR, f'confusion_matrix_{dataset_name}_config_{config_idx}.png'))
+        sns.heatmap(
+            cm, annot=True, fmt="d", cmap="Blues", xticklabels=class_names, yticklabels=class_names
+        )
+        plt.title(f"Confusion Matrix - {dataset_name} (Config {config_idx})")
+        plt.xlabel("Predicted")
+        plt.ylabel("True")
+        plt.savefig(
+            os.path.join(RESULT_DIR, f"confusion_matrix_{dataset_name}_config_{config_idx}.png")
+        )
         plt.close()
 
     @staticmethod
@@ -133,10 +150,12 @@ class Visualizer:
         """
         plt.figure(figsize=(12, 6))
         sns.barplot(x=feature_importance, y=feature_names)
-        plt.title(f'Feature Importance - {dataset_name} (Config {config_idx})')
-        plt.xlabel('Importance')
-        plt.ylabel('Features')
-        plt.savefig(os.path.join(RESULT_DIR, f'feature_importance_{dataset_name}_config_{config_idx}.png'))
+        plt.title(f"Feature Importance - {dataset_name} (Config {config_idx})")
+        plt.xlabel("Importance")
+        plt.ylabel("Features")
+        plt.savefig(
+            os.path.join(RESULT_DIR, f"feature_importance_{dataset_name}_config_{config_idx}.png")
+        )
         plt.close()
 
     @staticmethod
@@ -150,7 +169,11 @@ class Visualizer:
             config_idx (int): Index of the configuration.
         """
         from torchviz import make_dot
+
         x = torch.randn(1, model.input_size).requires_grad_(True)
         y = model(x)
         dot = make_dot(y, params=dict(model.named_parameters()))
-        dot.render(os.path.join(RESULT_DIR, f'model_architecture_{dataset_name}_config_{config_idx}'), format='png')
+        dot.render(
+            os.path.join(RESULT_DIR, f"model_architecture_{dataset_name}_config_{config_idx}"),
+            format="png",
+        )

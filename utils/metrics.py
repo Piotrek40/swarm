@@ -2,6 +2,7 @@ import torch
 from sklearn.metrics import accuracy_score, f1_score, mean_squared_error, r2_score
 import numpy as np
 
+
 def calculate_metrics(outputs, targets, problem_type):
     """
     Calculates various metrics based on the problem type.
@@ -17,20 +18,21 @@ def calculate_metrics(outputs, targets, problem_type):
     outputs = outputs.cpu().numpy()
     targets = targets.cpu().numpy()
 
-    if problem_type == 'classification':
+    if problem_type == "classification":
         pred = np.argmax(outputs, axis=1)
         return {
-            'accuracy': accuracy_score(targets, pred),
-            'f1_score': f1_score(targets, pred, average='weighted')
+            "accuracy": accuracy_score(targets, pred),
+            "f1_score": f1_score(targets, pred, average="weighted"),
         }
-    elif problem_type == 'regression':
+    elif problem_type == "regression":
         return {
-            'mse': mean_squared_error(targets, outputs),
-            'rmse': np.sqrt(mean_squared_error(targets, outputs)),
-            'r2_score': r2_score(targets, outputs)
+            "mse": mean_squared_error(targets, outputs),
+            "rmse": np.sqrt(mean_squared_error(targets, outputs)),
+            "r2_score": r2_score(targets, outputs),
         }
     else:
         raise ValueError(f"Unknown problem type: {problem_type}")
+
 
 def calculate_model_complexity(model):
     """
@@ -44,6 +46,7 @@ def calculate_model_complexity(model):
     """
     return sum(p.numel() for p in model.parameters())
 
+
 def calculate_diversity(population):
     """
     Calculates the diversity of a population of models.
@@ -56,6 +59,7 @@ def calculate_diversity(population):
     """
     complexities = [calculate_model_complexity(model) for model in population]
     return np.std(complexities) / np.mean(complexities)
+
 
 def calculate_ensemble_performance(ensemble, inputs, targets, problem_type):
     """
@@ -74,6 +78,7 @@ def calculate_ensemble_performance(ensemble, inputs, targets, problem_type):
     ensemble_output = torch.mean(outputs, dim=0)
     return calculate_metrics(ensemble_output, targets, problem_type)
 
+
 def track_fitness_over_time(swarm, generations):
     """
     Tracks the best fitness of a swarm over multiple generations.
@@ -90,6 +95,7 @@ def track_fitness_over_time(swarm, generations):
         swarm.evolve()
         fitness_history.append(swarm.get_best_model().fitness)
     return fitness_history
+
 
 def calculate_pareto_front(population, objectives):
     """
@@ -109,7 +115,9 @@ def calculate_pareto_front(population, objectives):
         for other_model in population:
             if model != other_model:
                 other_objectives = [obj(other_model) for obj in objectives]
-                if all(o1 <= o2 for o1, o2 in zip(other_objectives, model_objectives)) and any(o1 < o2 for o1, o2 in zip(other_objectives, model_objectives)):
+                if all(o1 <= o2 for o1, o2 in zip(other_objectives, model_objectives)) and any(
+                    o1 < o2 for o1, o2 in zip(other_objectives, model_objectives)
+                ):
                     is_dominated = True
                     break
         if not is_dominated:

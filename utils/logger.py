@@ -4,21 +4,21 @@ import json
 import logging
 from datetime import datetime
 
+
 class Logger:
     def __init__(self, log_dir, log_level=logging.INFO):
         self.log_dir = log_dir
         self.results = []
         self.start_time = datetime.now()
         os.makedirs(log_dir, exist_ok=True)
-        self.event_log_path = os.path.join(log_dir, 'event_log.txt')
+        self.event_log_path = os.path.join(log_dir, "event_log.txt")
 
         # Configure logging
-        logging.basicConfig(level=log_level,
-                            format='%(asctime)s - %(levelname)s - %(message)s',
-                            handlers=[
-                                logging.FileHandler(self.event_log_path),
-                                logging.StreamHandler()
-                            ])
+        logging.basicConfig(
+            level=log_level,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            handlers=[logging.FileHandler(self.event_log_path), logging.StreamHandler()],
+        )
 
     def log_result(self, result):
         self.results.append(result)
@@ -31,7 +31,7 @@ class Logger:
 
         try:
             keys = self.results[0].keys()
-            with open(filename, 'w', newline='') as output_file:
+            with open(filename, "w", newline="") as output_file:
                 dict_writer = csv.DictWriter(output_file, keys)
                 dict_writer.writeheader()
                 dict_writer.writerows(self.results)
@@ -40,9 +40,9 @@ class Logger:
             self._log_event(f"Error saving results: {str(e)}", level=logging.ERROR)
 
     def log_experiment_config(self, config):
-        config_file = os.path.join(self.log_dir, 'experiment_config.json')
+        config_file = os.path.join(self.log_dir, "experiment_config.json")
         try:
-            with open(config_file, 'w') as f:
+            with open(config_file, "w") as f:
                 json.dump(config, f, indent=4)
             self._log_event(f"Logged experiment config: {config}", level=logging.INFO)
         except Exception as e:

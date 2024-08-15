@@ -4,14 +4,15 @@ from models.swarm import EvolutionarySwarm
 from models.nano_model import NanoModel
 from config import DEVICE, NUM_SUBPOPULATIONS
 
+
 class TestSwarm(unittest.TestCase):
     def setUp(self):
         self.dataset_config = {
-            'input_size': 10,
-            'hidden_sizes': [20, 20],
-            'output_size': 2,
-            'problem_type': 'classification',
-            'model_type': 'mlp'
+            "input_size": 10,
+            "hidden_sizes": [20, 20],
+            "output_size": 2,
+            "problem_type": "classification",
+            "model_type": "mlp",
         }
         self.swarm = EvolutionarySwarm(self.dataset_config, initial_population_size=10)
 
@@ -21,9 +22,9 @@ class TestSwarm(unittest.TestCase):
             self.assertEqual(len(subpop.models), 10 // NUM_SUBPOPULATIONS)
 
     def test_evolve(self):
-        data = torch.randn(32, self.dataset_config['input_size']).to(DEVICE)
-        targets = torch.randint(0, self.dataset_config['output_size'], (32,)).to(DEVICE)
-        
+        data = torch.randn(32, self.dataset_config["input_size"]).to(DEVICE)
+        targets = torch.randint(0, self.dataset_config["output_size"], (32,)).to(DEVICE)
+
         initial_best_fitness = self.swarm.best_fitness
         self.swarm.evolve(data, targets)
         self.assertGreater(self.swarm.best_fitness, initial_best_fitness)
@@ -67,9 +68,9 @@ class TestSwarm(unittest.TestCase):
         os.unlink(checkpoint_path)
 
     def test_parallel_evolve(self):
-        data = torch.randn(32, self.dataset_config['input_size']).to(DEVICE)
-        targets = torch.randint(0, self.dataset_config['output_size'], (32,)).to(DEVICE)
-        
+        data = torch.randn(32, self.dataset_config["input_size"]).to(DEVICE)
+        targets = torch.randint(0, self.dataset_config["output_size"], (32,)).to(DEVICE)
+
         initial_best_fitness = self.swarm.best_fitness
         self.swarm.parallel_evolve(data, targets, num_processes=2)
         self.assertGreater(self.swarm.best_fitness, initial_best_fitness)
@@ -95,13 +96,13 @@ class TestSwarm(unittest.TestCase):
 
     def test_get_population_stats(self):
         stats = self.swarm.get_population_stats()
-        self.assertIn('total_population', stats)
-        self.assertIn('avg_fitness', stats)
-        self.assertIn('best_fitness', stats)
-        self.assertIn('avg_complexity', stats)
-        self.assertIn('generation', stats)
-        self.assertIn('mutation_rates', stats)
-        self.assertIn('crossover_rates', stats)
+        self.assertIn("total_population", stats)
+        self.assertIn("avg_fitness", stats)
+        self.assertIn("best_fitness", stats)
+        self.assertIn("avg_complexity", stats)
+        self.assertIn("generation", stats)
+        self.assertIn("mutation_rates", stats)
+        self.assertIn("crossover_rates", stats)
 
     def test_clean_memory(self):
         initial_models = sum(len(subpop.models) for subpop in self.swarm.subpopulations)
@@ -110,12 +111,15 @@ class TestSwarm(unittest.TestCase):
         self.assertEqual(initial_models, final_models)  # Ensure we didn't lose any models
 
     def test_reset(self):
-        self.swarm.evolve(torch.randn(32, self.dataset_config['input_size']).to(DEVICE),
-                          torch.randint(0, self.dataset_config['output_size'], (32,)).to(DEVICE))
+        self.swarm.evolve(
+            torch.randn(32, self.dataset_config["input_size"]).to(DEVICE),
+            torch.randint(0, self.dataset_config["output_size"], (32,)).to(DEVICE),
+        )
         initial_generation = self.swarm.generation
         self.swarm.reset()
         self.assertEqual(self.swarm.generation, 0)
         self.assertLess(self.swarm.generation, initial_generation)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

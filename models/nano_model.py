@@ -4,6 +4,7 @@ import random
 import jsonpickle
 from config import DEVICE, GENERATOR, DROPOUT_RATE
 
+
 class NanoModel(nn.Module):
     """
     A flexible neural network model that can be configured as MLP, CNN, or RNN.
@@ -19,33 +20,37 @@ class NanoModel(nn.Module):
 
     def __init__(self, config):
         super(NanoModel, self).__init__()
-        self.model_type = config['model_type']
-        self.problem_type = config['problem_type']
-        
-        if self.model_type == 'mlp':
-            self.layers = self._create_mlp(config['input_size'], config['hidden_sizes'], config['output_size'])
-        elif self.model_type == 'cnn':
-            self.layers = self._create_cnn(config['input_size'], config['hidden_sizes'], config['output_size'])
-        elif self.model_type == 'rnn':
-            self.layers = self._create_rnn(config['input_size'], config['hidden_sizes'], config['output_size'])
+        self.model_type = config["model_type"]
+        self.problem_type = config["problem_type"]
+
+        if self.model_type == "mlp":
+            self.layers = self._create_mlp(
+                config["input_size"], config["hidden_sizes"], config["output_size"]
+            )
+        elif self.model_type == "cnn":
+            self.layers = self._create_cnn(
+                config["input_size"], config["hidden_sizes"], config["output_size"]
+            )
+        elif self.model_type == "rnn":
+            self.layers = self._create_rnn(
+                config["input_size"], config["hidden_sizes"], config["output_size"]
+            )
         else:
             raise ValueError(f"Unknown model type: {self.model_type}")
-        
+
         self.to(DEVICE)
-        
+
         self.epigenetic_marks = {}
-        self.fitness = float('-inf')
+        self.fitness = float("-inf")
         self.niche = None
-    
+
     def _create_mlp(self, input_size, hidden_sizes, output_size):
         layers = []
         in_features = input_size
         for hidden_size in hidden_sizes:
-            layers.extend([
-                nn.Linear(in_features, hidden_size),
-                nn.ReLU(),
-                nn.Dropout(DROPOUT_RATE)
-            ])
+            layers.extend(
+                [nn.Linear(in_features, hidden_size), nn.ReLU(), nn.Dropout(DROPOUT_RATE)]
+            )
             in_features = hidden_size
         layers.append(nn.Linear(in_features, output_size))
         return nn.Sequential(*layers)
@@ -54,22 +59,28 @@ class NanoModel(nn.Module):
         layers = []
         in_channels = input_size[0]
         for hidden_size in hidden_sizes:
-            layers.extend([
-                nn.Conv2d(in_channels, hidden_size, kernel_size=3, padding=1),
-                nn.ReLU(),
-                nn.MaxPool2d(2)
-            ])
+            layers.extend(
+                [
+                    nn.Conv2d(in_channels, hidden_size, kernel_size=3, padding=1),
+                    nn.ReLU(),
+                    nn.MaxPool2d(2),
+                ]
+            )
             in_channels = hidden_size
-        layers.extend([
-            nn.Flatten(),
-            nn.Linear(hidden_sizes[-1] * (input_size[1] // 8) * (input_size[2] // 8), output_size)
-        ])
+        layers.extend(
+            [
+                nn.Flatten(),
+                nn.Linear(
+                    hidden_sizes[-1] * (input_size[1] // 8) * (input_size[2] // 8), output_size
+                ),
+            ]
+        )
         return nn.Sequential(*layers)
 
     def _create_rnn(self, input_size, hidden_sizes, output_size):
         return nn.Sequential(
             nn.LSTM(input_size, hidden_sizes[0], num_layers=len(hidden_sizes), batch_first=True),
-            nn.Linear(hidden_sizes[0], output_size)
+            nn.Linear(hidden_sizes[0], output_size),
         )
 
     def forward(self, x):
@@ -83,7 +94,7 @@ class NanoModel(nn.Module):
             torch.Tensor: The output of the model.
         """
         try:
-            if self.model_type == 'rnn':
+            if self.model_type == "rnn":
                 x, _ = self.layers[0](x)
                 x = self.layers[1](x[:, -1, :])
             else:
@@ -103,8 +114,13 @@ class NanoModel(nn.Module):
         try:
             with torch.no_grad():
                 for param in self.parameters():
-                    mask = (torch.rand(param.shape, generator=GENERATOR).to(param.device) < mutation_rate)
-                    param.data += torch.randn(param.shape, generator=GENERATOR).to(param.device) * mask * 0.1
+                    mask = (
+                        torch.rand(param.shape, generator=GENERATOR).to(param.device)
+                        < mutation_rate
+                    )
+                    param.data += (
+                        torch.randn(param.shape, generator=GENERATOR).to(param.device) * mask * 0.1
+                    )
         except Exception as e:
             print(f"Error during mutation: {str(e)}")
             raise
@@ -122,7 +138,7 @@ class NanoModel(nn.Module):
         clone.fitness = self.fitness
         clone.niche = self.niche
         return clone
-    
+
     def get_complexity(self):
         """
         Calculates the complexity of the model.
@@ -131,7 +147,7 @@ class NanoModel(nn.Module):
             int: The total number of parameters in the model.
         """
         return sum(p.numel() for p in self.parameters())
-    
+
     def apply_epigenetic_modification(self, modification):
         """
         Applies an epigenetic modification to the model.
@@ -140,13 +156,13 @@ class NanoModel(nn.Module):
             modification (str): The type of modification to apply.
         """
         self.epigenetic_marks[modification] = True
-    
+
     def reset_epigenetic_modifications(self):
         """
         Resets all epigenetic modifications.
         """
         self.epigenetic_marks.clear()
-    
+
     def random_modification(self):
         """
         Applies a random modification to the model parameters.
@@ -162,13 +178,15 @@ class NanoModel(nn.Module):
         Returns:
             dict: The model configuration.
         """
-        if self.model_type == 'mlp':
+        if self.model_type == "mlp":
             input_size = self.layers[0].in_features
             hidden_sizes = [layer.out_features for layer in self.layers[:-1:3]]
             output_size = self.layers[-1].out_features
-        elif self.model_type == 'cnn':
+        elif self.model_type == "cnn":
             input_size = (self.layers[0].in_channels, 32, 32)  # Assuming CIFAR10
-            hidden_sizes = [layer.out_channels for layer in self.layers if isinstance(layer, nn.Conv2d)]
+            hidden_sizes = [
+                layer.out_channels for layer in self.layers if isinstance(layer, nn.Conv2d)
+            ]
             output_size = self.layers[-1].out_features
         else:  # RNN
             input_size = self.layers[0].input_size
@@ -176,11 +194,11 @@ class NanoModel(nn.Module):
             output_size = self.layers[1].out_features
 
         return {
-            'input_size': input_size,
-            'hidden_sizes': hidden_sizes,
-            'output_size': output_size,
-            'problem_type': self.problem_type,
-            'model_type': self.model_type
+            "input_size": input_size,
+            "hidden_sizes": hidden_sizes,
+            "output_size": output_size,
+            "problem_type": self.problem_type,
+            "model_type": self.model_type,
         }
 
     @classmethod
@@ -225,10 +243,11 @@ class NanoModel(nn.Module):
         Returns:
             torch.Tensor: The L2 regularization term.
         """
-        l2_reg = torch.tensor(0., device=DEVICE)
+        l2_reg = torch.tensor(0.0, device=DEVICE)
         for param in self.parameters():
             l2_reg += torch.norm(param)
         return l2_reg
+
 
 class SymbioticPair:
     """
@@ -247,8 +266,8 @@ class SymbioticPair:
     def __init__(self, model1, model2):
         self.model1 = model1
         self.model2 = model2
-        self.fitness = float('-inf')
-    
+        self.fitness = float("-inf")
+
     def forward(self, x):
         """
         Performs a forward pass through both models and combines their outputs.
