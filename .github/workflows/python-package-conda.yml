@@ -24,9 +24,10 @@ jobs:
     - name: Set up Conda environment
       run: |
         conda init bash
-        conda create --name myenv python=3.10 -y
         source ~/.bashrc
-        conda activate myenv
+        conda create --name myenv python=3.10 -y
+        conda run -n myenv echo "Conda environment activated"
+        source activate myenv || conda activate myenv
 
     - name: Install dependencies
       run: |
@@ -39,4 +40,3 @@ jobs:
     - name: Run tests
       run: |
         pytest
-
