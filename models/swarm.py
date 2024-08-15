@@ -32,7 +32,9 @@ class Niche:
     def __init__(self, specialization: str):
         self.specialization = specialization
 
-    def evaluate(self, model: NanoModel, environment: Environment, data: torch.Tensor, targets: torch.Tensor) -> float:
+    def evaluate(
+        self, model: NanoModel, environment: Environment, data: torch.Tensor, targets: torch.Tensor
+    ) -> float:
         """
         Evaluates a model in the current niche and environment.
 
@@ -388,7 +390,9 @@ class EvolutionarySwarm:
         """Resets the swarm to its initial state."""
         self.__init__(self.dataset_config, INITIAL_POPULATION_SIZE)
 
-    def parallel_evolve(self, data: torch.Tensor, targets: torch.Tensor, num_processes: int = NUM_PROCESSES) -> 'EvolutionarySwarm':
+    def parallel_evolve(
+        self, data: torch.Tensor, targets: torch.Tensor, num_processes: int = NUM_PROCESSES
+    ) -> "EvolutionarySwarm":
         """
         Evolves the swarm in parallel.
 

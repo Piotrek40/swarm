@@ -249,7 +249,9 @@ def create_val_test_loaders(dataset: torch.utils.data.Dataset) -> Tuple[DataLoad
     return val_loader, test_loader
 
 
-def pad_collate(batch: List[Tuple[torch.Tensor, torch.Tensor]]) -> Tuple[torch.Tensor, torch.Tensor]:
+def pad_collate(
+    batch: List[Tuple[torch.Tensor, torch.Tensor]]
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """Pad and collate data for variable length sequences."""
     (xx, yy) = zip(*batch)
     x_lens = [len(x) for x in xx]
@@ -283,7 +285,9 @@ def get_input_output_sizes(dataset_name: str) -> Tuple[int, int]:
     return dataset_info["input_size"], dataset_info["output_size"]
 
 
-def augment_image_data(images: torch.Tensor, labels: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+def augment_image_data(
+    images: torch.Tensor, labels: torch.Tensor
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """Augment image data with flips and rotations."""
     augmented_images = []
     augmented_labels = []

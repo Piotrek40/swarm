@@ -8,14 +8,7 @@ from typing import Dict, Any
 
 from experiments.experiment_runner import run_experiments
 from utils.visualizer import Visualizer
-from config import (
-    EXPERIMENT_CONFIGS,
-    IS_KAGGLE,
-    IS_COLAB,
-    DEVICE,
-    LOG_DIR,
-    RESULT_DIR
-)
+from config import EXPERIMENT_CONFIGS, IS_KAGGLE, IS_COLAB, DEVICE, LOG_DIR, RESULT_DIR
 from utils.logger import Logger
 
 
@@ -52,7 +45,11 @@ def main(args: argparse.Namespace) -> None:
         else:
             logger.log_event("Running in local environment")
 
-        configs = [config for config in EXPERIMENT_CONFIGS if config["dataset"] == args.dataset] if args.dataset else EXPERIMENT_CONFIGS
+        configs = (
+            [config for config in EXPERIMENT_CONFIGS if config["dataset"] == args.dataset]
+            if args.dataset
+            else EXPERIMENT_CONFIGS
+        )
 
         results = run_experiments(configs)
 
@@ -65,6 +62,7 @@ def main(args: argparse.Namespace) -> None:
     except Exception as e:
         logger.log_error(f"An error occurred during experiments: {str(e)}")
         import traceback
+
         logger.log_error(traceback.format_exc())
     finally:
         logger.close()

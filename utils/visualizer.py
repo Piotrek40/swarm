@@ -13,7 +13,9 @@ class Visualizer:
     """Class for creating visualizations of experiment results."""
 
     @staticmethod
-    def plot_fitness_over_time(generations: List[int], fitness_values: List[float], dataset_name: str, config_idx: int) -> None:
+    def plot_fitness_over_time(
+        generations: List[int], fitness_values: List[float], dataset_name: str, config_idx: int
+    ) -> None:
         """
         Plots the fitness values over generations.
 
@@ -34,7 +36,9 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_population_diversity(diversity_values: List[float], dataset_name: str, config_idx: int) -> None:
+    def plot_population_diversity(
+        diversity_values: List[float], dataset_name: str, config_idx: int
+    ) -> None:
         """
         Plots the population diversity over generations.
 
@@ -54,7 +58,12 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_pareto_front(objective1_values: List[float], objective2_values: List[float], dataset_name: str, config_idx: int) -> None:
+    def plot_pareto_front(
+        objective1_values: List[float],
+        objective2_values: List[float],
+        dataset_name: str,
+        config_idx: int,
+    ) -> None:
         """
         Plots the Pareto front for two objectives.
 
@@ -75,7 +84,9 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_model_complexity_distribution(complexities: List[int], dataset_name: str, config_idx: int) -> None:
+    def plot_model_complexity_distribution(
+        complexities: List[int], dataset_name: str, config_idx: int
+    ) -> None:
         """
         Plots the distribution of model complexities in the population.
 
@@ -97,7 +108,9 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_learning_curves(train_losses: List[float], val_losses: List[float], dataset_name: str, config_idx: int) -> None:
+    def plot_learning_curves(
+        train_losses: List[float], val_losses: List[float], dataset_name: str, config_idx: int
+    ) -> None:
         """
         Plots the learning curves (train and validation losses).
 
@@ -120,7 +133,9 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_confusion_matrix(cm: np.ndarray, class_names: List[str], dataset_name: str, config_idx: int) -> None:
+    def plot_confusion_matrix(
+        cm: np.ndarray, class_names: List[str], dataset_name: str, config_idx: int
+    ) -> None:
         """
         Plots a confusion matrix.
 
@@ -143,7 +158,12 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_feature_importance(feature_importance: List[float], feature_names: List[str], dataset_name: str, config_idx: int) -> None:
+    def plot_feature_importance(
+        feature_importance: List[float],
+        feature_names: List[str],
+        dataset_name: str,
+        config_idx: int,
+    ) -> None:
         """
         Plots feature importance.
 

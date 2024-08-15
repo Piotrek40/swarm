@@ -6,7 +6,9 @@ import numpy as np
 from typing import Dict, List, Any
 
 
-def calculate_metrics(outputs: torch.Tensor, targets: torch.Tensor, problem_type: str) -> Dict[str, float]:
+def calculate_metrics(
+    outputs: torch.Tensor, targets: torch.Tensor, problem_type: str
+) -> Dict[str, float]:
     """
     Calculates various metrics based on the problem type.
 
@@ -65,10 +67,7 @@ def calculate_diversity(population: List[torch.nn.Module]) -> float:
 
 
 def calculate_ensemble_performance(
-    ensemble: List[torch.nn.Module], 
-    inputs: torch.Tensor, 
-    targets: torch.Tensor, 
-    problem_type: str
+    ensemble: List[torch.nn.Module], inputs: torch.Tensor, targets: torch.Tensor, problem_type: str
 ) -> Dict[str, float]:
     """
     Calculates the performance of an ensemble of models.
@@ -105,7 +104,9 @@ def track_fitness_over_time(swarm: Any, generations: int) -> List[float]:
     return fitness_history
 
 
-def calculate_pareto_front(population: List[torch.nn.Module], objectives: List[callable]) -> List[torch.nn.Module]:
+def calculate_pareto_front(
+    population: List[torch.nn.Module], objectives: List[callable]
+) -> List[torch.nn.Module]:
     """
     Calculates the Pareto front for a population based on multiple objectives.
 

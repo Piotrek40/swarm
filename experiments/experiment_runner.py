@@ -174,7 +174,9 @@ def run_experiments(experiment_configs: List[Dict[str, Any]]) -> List[Dict[str, 
     return all_results
 
 
-def validate(swarm: EvolutionarySwarm, data_loader: torch.utils.data.DataLoader, problem_type: str) -> Tuple[float, Dict[str, float]]:
+def validate(
+    swarm: EvolutionarySwarm, data_loader: torch.utils.data.DataLoader, problem_type: str
+) -> Tuple[float, Dict[str, float]]:
     """
     Validate the swarm's best model on a given data loader.
 
@@ -226,7 +228,9 @@ def save_best_model(swarm: EvolutionarySwarm, dataset_name: str, config_idx: int
     torch.save(swarm.get_best_model().state_dict(), best_model_path)
 
 
-def save_checkpoint(swarm: EvolutionarySwarm, dataset_name: str, config_idx: int, generation: int) -> None:
+def save_checkpoint(
+    swarm: EvolutionarySwarm, dataset_name: str, config_idx: int, generation: int
+) -> None:
     """
     Save a checkpoint of the swarm.
 
@@ -242,7 +246,13 @@ def save_checkpoint(swarm: EvolutionarySwarm, dataset_name: str, config_idx: int
     swarm.save_checkpoint(checkpoint_path)
 
 
-def save_partial_results(file_path: str, generation: int, val_loss: float, stats: Dict[str, Any], metrics: Dict[str, float]) -> None:
+def save_partial_results(
+    file_path: str,
+    generation: int,
+    val_loss: float,
+    stats: Dict[str, Any],
+    metrics: Dict[str, float],
+) -> None:
     """
     Save partial results during the experiment.
 
@@ -329,7 +339,13 @@ def continue_experiment(checkpoint_path: str, config: Dict[str, Any]) -> Evoluti
         raise
 
 
-def train_step(swarm: EvolutionarySwarm, optimizer: torch.optim.Optimizer, data: torch.Tensor, targets: torch.Tensor, l2_lambda: float = L2_LAMBDA) -> float:
+def train_step(
+    swarm: EvolutionarySwarm,
+    optimizer: torch.optim.Optimizer,
+    data: torch.Tensor,
+    targets: torch.Tensor,
+    l2_lambda: float = L2_LAMBDA,
+) -> float:
     """
     Perform a single training step.
 

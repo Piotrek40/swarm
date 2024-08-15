@@ -36,7 +36,9 @@ class SwarmFactory:
         self.swarm_cache[config_key] = swarm
         return swarm
 
-    def create_swarm_for_dataset(self, dataset_name: str, population_size: int = INITIAL_POPULATION_SIZE) -> EvolutionarySwarm:
+    def create_swarm_for_dataset(
+        self, dataset_name: str, population_size: int = INITIAL_POPULATION_SIZE
+    ) -> EvolutionarySwarm:
         """
         Create a swarm for a specific dataset.
 
@@ -96,8 +98,13 @@ class SwarmFactory:
         self.metadata = torch.load(path)
 
     def create_custom_swarm(
-        self, input_size: int, hidden_sizes: List[int], output_size: int, 
-        model_type: str, problem_type: str, population_size: int
+        self,
+        input_size: int,
+        hidden_sizes: List[int],
+        output_size: int,
+        model_type: str,
+        problem_type: str,
+        population_size: int,
     ) -> EvolutionarySwarm:
         """
         Create a custom swarm with specified parameters.
@@ -125,7 +132,9 @@ class SwarmFactory:
         )
 
 
-def create_swarm_for_dataset(dataset_name: str, population_size: int = INITIAL_POPULATION_SIZE) -> EvolutionarySwarm:
+def create_swarm_for_dataset(
+    dataset_name: str, population_size: int = INITIAL_POPULATION_SIZE
+) -> EvolutionarySwarm:
     """
     Create a swarm for a specific dataset.
 
