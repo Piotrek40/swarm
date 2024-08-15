@@ -4,9 +4,10 @@ pandas>=1.1.3
 scipy>=1.7.1
 
 # PyTorch i powiązane biblioteki z obsługą GPU
-torch==1.10.0+cu113  # cu113 indicates CUDA 11.3 support
-torchvision==0.11.2+cu113
-torchaudio==0.10.0+cu113
+torch
+torchvision
+torchaudio
+
 
 # Biblioteki do przetwarzania danych i uczenia maszynowego
 scikit-learn==1.0.1
