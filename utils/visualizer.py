@@ -3,6 +3,7 @@ import seaborn as sns
 import numpy as np
 from config import RESULT_DIR
 import os
+import torch
 
 class Visualizer:
     @staticmethod
