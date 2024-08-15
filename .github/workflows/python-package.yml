@@ -1,38 +1,23 @@
-name: Python package with GPU
+name: Python Lint
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build-linux:
+  lint:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 5
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v3
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
       with:
         python-version: '3.9'
-
-    - name: Install PyTorch with CUDA
-      run: |
-        pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
-        pip install -r requirements.txt
-
-
     - name: Install dependencies
       run: |
-        pip install torch==1.10.0+cu113 torchvision==0.11.2+cu113 torchaudio==0.10.0+cu113
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
-
-    - name: Lint code with flake8
+    - name: Run linters
       run: |
-        pip install flake8
-        flake8 --max-line-length=88 .
-
-    - name: Run tests
-      run: |
-        pip install pytest
-        pytest
+        flake8 .
+        pylint **/*.py
+        black --check .
 
