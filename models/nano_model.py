@@ -342,20 +342,17 @@ class SymbioticPair:
         """
         return jsonpickle.encode(self)
 
-    @classmethod
-    def from_json(cls, json_str: str) -> 'SymbioticPair':
+   @classmethod
+    def from_json(cls, json_str: str) -> 'NanoModel':
         """
-        Creates a new instance of SymbioticPair from a JSON string.
+        Creates a new instance of NanoModel from a JSON string.
 
         Args:
-            json_str (str): A JSON representation of the symbiotic pair.
+            json_str: A JSON representation of the model.
 
         Returns:
-            SymbioticPair: A new instance of SymbioticPair.
+            NanoModel: A new instance of NanoModel.
         """
         return jsonpickle.decode(json_str)
-
-        Returns:
-            SymbioticPair: A new instance of SymbioticPair.
         """
         return jsonpickle.decode(json_str)
