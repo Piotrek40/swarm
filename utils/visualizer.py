@@ -1,11 +1,14 @@
 """Visualization utilities for NanoAI experiments."""
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-from typing import List, Tuple
 import os
-import torch
+from typing import List
+
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from torch import Tensor, nn, randn
+from torchviz import make_dot
+
 from config import RESULT_DIR
 
 
@@ -17,13 +20,13 @@ class Visualizer:
         generations: List[int], fitness_values: List[float], dataset_name: str, config_idx: int
     ) -> None:
         """
-        Plots the fitness values over generations.
+        Plot the fitness values over generations.
 
         Args:
-            generations (List[int]): List of generation numbers.
-            fitness_values (List[float]): Corresponding fitness values.
-            dataset_name (str): Name of the dataset.
-            config_idx (int): Index of the configuration.
+            generations: List of generation numbers.
+            fitness_values: Corresponding fitness values.
+            dataset_name: Name of the dataset.
+            config_idx: Index of the configuration.
         """
         plt.figure(figsize=(10, 6))
         plt.plot(generations, fitness_values)
@@ -40,12 +43,12 @@ class Visualizer:
         diversity_values: List[float], dataset_name: str, config_idx: int
     ) -> None:
         """
-        Plots the population diversity over generations.
+        Plot the population diversity over generations.
 
         Args:
-            diversity_values (List[float]): List of diversity values.
-            dataset_name (str): Name of the dataset.
-            config_idx (int): Index of the configuration.
+            diversity_values: List of diversity values.
+            dataset_name: Name of the dataset.
+            config_idx: Index of the configuration.
         """
         plt.figure(figsize=(10, 6))
         plt.plot(range(len(diversity_values)), diversity_values)
@@ -65,13 +68,13 @@ class Visualizer:
         config_idx: int,
     ) -> None:
         """
-        Plots the Pareto front for two objectives.
+        Plot the Pareto front for two objectives.
 
         Args:
-            objective1_values (List[float]): Values for the first objective.
-            objective2_values (List[float]): Values for the second objective.
-            dataset_name (str): Name of the dataset.
-            config_idx (int): Index of the configuration.
+            objective1_values: Values for the first objective.
+            objective2_values: Values for the second objective.
+            dataset_name: Name of the dataset.
+            config_idx: Index of the configuration.
         """
         plt.figure(figsize=(10, 6))
         plt.scatter(objective1_values, objective2_values)
@@ -88,12 +91,12 @@ class Visualizer:
         complexities: List[int], dataset_name: str, config_idx: int
     ) -> None:
         """
-        Plots the distribution of model complexities in the population.
+        Plot the distribution of model complexities in the population.
 
         Args:
-            complexities (List[int]): List of model complexities.
-            dataset_name (str): Name of the dataset.
-            config_idx (int): Index of the configuration.
+            complexities: List of model complexities.
+            dataset_name: Name of the dataset.
+            config_idx: Index of the configuration.
         """
         plt.figure(figsize=(10, 6))
         sns.histplot(complexities, kde=True)
@@ -112,13 +115,13 @@ class Visualizer:
         train_losses: List[float], val_losses: List[float], dataset_name: str, config_idx: int
     ) -> None:
         """
-        Plots the learning curves (train and validation losses).
+        Plot the learning curves (train and validation losses).
 
         Args:
-            train_losses (List[float]): List of training losses.
-            val_losses (List[float]): List of validation losses.
-            dataset_name (str): Name of the dataset.
-            config_idx (int): Index of the configuration.
+            train_losses: List of training losses.
+            val_losses: List of validation losses.
+            dataset_name: Name of the dataset.
+            config_idx: Index of the configuration.
         """
         plt.figure(figsize=(10, 6))
         plt.plot(range(len(train_losses)), train_losses, label="Train Loss")
@@ -134,20 +137,21 @@ class Visualizer:
 
     @staticmethod
     def plot_confusion_matrix(
-        cm: np.ndarray, class_names: List[str], dataset_name: str, config_idx: int
+        confusion_matrix: np.ndarray, class_names: List[str], dataset_name: str, config_idx: int
     ) -> None:
         """
-        Plots a confusion matrix.
+        Plot a confusion matrix.
 
         Args:
-            cm (np.ndarray): The confusion matrix.
-            class_names (List[str]): List of class names.
-            dataset_name (str): Name of the dataset.
-            config_idx (int): Index of the configuration.
+            confusion_matrix: The confusion matrix.
+            class_names: List of class names.
+            dataset_name: Name of the dataset.
+            config_idx: Index of the configuration.
         """
         plt.figure(figsize=(10, 8))
         sns.heatmap(
-            cm, annot=True, fmt="d", cmap="Blues", xticklabels=class_names, yticklabels=class_names
+            confusion_matrix, annot=True, fmt="d", cmap="Blues", 
+            xticklabels=class_names, yticklabels=class_names
         )
         plt.title(f"Confusion Matrix - {dataset_name} (Config {config_idx})")
         plt.xlabel("Predicted")
@@ -165,13 +169,13 @@ class Visualizer:
         config_idx: int,
     ) -> None:
         """
-        Plots feature importance.
+        Plot feature importance.
 
         Args:
-            feature_importance (List[float]): List of feature importance scores.
-            feature_names (List[str]): List of feature names.
-            dataset_name (str): Name of the dataset.
-            config_idx (int): Index of the configuration.
+            feature_importance: List of feature importance scores.
+            feature_names: List of feature names.
+            dataset_name: Name of the dataset.
+            config_idx: Index of the configuration.
         """
         plt.figure(figsize=(12, 6))
         sns.barplot(x=feature_importance, y=feature_names)
@@ -184,20 +188,18 @@ class Visualizer:
         plt.close()
 
     @staticmethod
-    def plot_model_architecture(model: torch.nn.Module, dataset_name: str, config_idx: int) -> None:
+    def plot_model_architecture(model: nn.Module, dataset_name: str, config_idx: int) -> None:
         """
-        Plots the architecture of a model.
+        Plot the architecture of a model.
 
         Args:
-            model (torch.nn.Module): The model to visualize.
-            dataset_name (str): Name of the dataset.
-            config_idx (int): Index of the configuration.
+            model: The model to visualize.
+            dataset_name: Name of the dataset.
+            config_idx: Index of the configuration.
         """
-        from torchviz import make_dot
-
-        x = torch.randn(1, model.input_size).requires_grad_(True)
-        y = model(x)
-        dot = make_dot(y, params=dict(model.named_parameters()))
+        input_tensor = randn(1, model.input_size).requires_grad_(True)
+        output = model(input_tensor)
+        dot = make_dot(output, params=dict(model.named_parameters()))
         dot.render(
             os.path.join(RESULT_DIR, f"model_architecture_{dataset_name}_config_{config_idx}"),
             format="png",
