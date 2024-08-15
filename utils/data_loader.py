@@ -81,22 +81,39 @@ def load_imdb_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
     """Load and prepare the IMDB dataset."""
     dataset = load_dataset("imdb")
 
-    vocab = set(word for split in ["train", "test"] for text in dataset[split]["text"] for word in text.split())
+    vocab = set(
+        word
+        for split in ["train", "test"]
+        for text in dataset[split]["text"]
+        for word in text.split()
+    )
     word_to_idx = {word: idx for idx, word in enumerate(vocab, 1)}
     word_to_idx["<PAD>"] = 0
 
     def tokenize(text: str) -> List[int]:
         return [word_to_idx.get(word, 0) for word in text.split()[:500]]
 
-    train_data = [(tensor(tokenize(text)), label) for text, label in zip(dataset["train"]["text"], dataset["train"]["label"])]
-    test_data = [(tensor(tokenize(text)), label) for text, label in zip(dataset["test"]["text"], dataset["test"]["label"])]
+    train_data = [
+        (tensor(tokenize(text)), label)
+        for text, label in zip(dataset["train"]["text"], dataset["train"]["label"])
+    ]
+    test_data = [
+        (tensor(tokenize(text)), label)
+        for text, label in zip(dataset["test"]["text"], dataset["test"]["label"])
+    ]
 
     train_dataset = train_data
     val_dataset, test_dataset = train_test_split(test_data, test_size=0.5, random_state=42)
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=pad_collate)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate)
+    train_loader = DataLoader(
+        train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=pad_collate
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate
+    )
+    test_loader = DataLoader(
+        test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate
+    )
 
     return train_loader, val_loader, test_loader
 
@@ -123,11 +140,21 @@ def load_synthetic_ner_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
     word2idx = {word: idx for idx, word in enumerate(words, 1)}
     word2idx["<PAD>"] = 0
     tag2idx = {
-        "O": 0, "B-PER": 1, "I-PER": 2, "B-LOC": 3, "I-LOC": 4,
-        "B-ORG": 5, "I-ORG": 6, "B-MISC": 7, "I-MISC": 8, "<PAD>": 9,
+        "O": 0,
+        "B-PER": 1,
+        "I-PER": 2,
+        "B-LOC": 3,
+        "I-LOC": 4,
+        "B-ORG": 5,
+        "I-ORG": 6,
+        "B-MISC": 7,
+        "I-MISC": 8,
+        "<PAD>": 9,
     }
 
-    X = [tensor([word2idx[word] for word in sentence.split()], dtype=long) for sentence in sentences]
+    X = [
+        tensor([word2idx[word] for word in sentence.split()], dtype=long) for sentence in sentences
+    ]
     y = [tensor([tag2idx[tag] for tag in sentence_tags], dtype=long) for sentence_tags in tags]
 
     dataset = list(zip(X, y))
@@ -136,11 +163,19 @@ def load_synthetic_ner_data() -> Tuple[DataLoader, DataLoader, DataLoader]:
     val_size = int(0.15 * len(dataset))
     test_size = len(dataset) - train_size - val_size
 
-    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
+    train_dataset, val_dataset, test_dataset = random_split(
+        dataset, [train_size, val_size, test_size]
+    )
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=pad_collate)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate)
+    train_loader = DataLoader(
+        train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=pad_collate
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate
+    )
+    test_loader = DataLoader(
+        test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=pad_collate
+    )
 
     return train_loader, val_loader, test_loader
 
@@ -190,8 +225,12 @@ def prepare_data(X: np.ndarray, y: np.ndarray) -> Tuple[DataLoader, DataLoader, 
     Returns:
         Tuple of train, validation, and test data loaders.
     """
-    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=TEST_SIZE + VALIDATION_SIZE, random_state=42)
-    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=TEST_SIZE / (TEST_SIZE + VALIDATION_SIZE), random_state=42)
+    X_train, X_temp, y_train, y_temp = train_test_split(
+        X, y, test_size=TEST_SIZE + VALIDATION_SIZE, random_state=42
+    )
+    X_val, X_test, y_val, y_test = train_test_split(
+        X_temp, y_temp, test_size=TEST_SIZE / (TEST_SIZE + VALIDATION_SIZE), random_state=42
+    )
 
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
@@ -205,7 +244,9 @@ def prepare_data(X: np.ndarray, y: np.ndarray) -> Tuple[DataLoader, DataLoader, 
     val_dataset = TensorDataset(X_val, y_val)
     test_dataset = TensorDataset(X_test, y_test)
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, generator=GENERATOR)
+    train_loader = DataLoader(
+        train_dataset, batch_size=BATCH_SIZE, shuffle=True, generator=GENERATOR
+    )
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
 

@@ -40,6 +40,7 @@ __all__ = [
     "Visualizer",
 ]
 
+
 def load_and_prepare_data(dataset_name: str) -> Tuple[Tensor, Tensor, Tensor]:
     """
     Load and prepare data for a given dataset.
@@ -57,6 +58,7 @@ def load_and_prepare_data(dataset_name: str) -> Tuple[Tensor, Tensor, Tensor]:
         return load_data(dataset_name)
     except ValueError as e:
         raise ValueError(f"Error loading dataset {dataset_name}: {str(e)}") from e
+
 
 def get_model_info(dataset_name: str) -> Dict[str, Any]:
     """
@@ -84,7 +86,10 @@ def get_model_info(dataset_name: str) -> Dict[str, Any]:
     except ValueError as e:
         raise ValueError(f"Error getting model info for dataset {dataset_name}: {str(e)}") from e
 
-def evaluate_model(model: nn.Module, data: Tensor, targets: Tensor, problem_type: str) -> Dict[str, float]:
+
+def evaluate_model(
+    model: nn.Module, data: Tensor, targets: Tensor, problem_type: str
+) -> Dict[str, float]:
     """
     Evaluate a model on given data.
 
@@ -99,5 +104,6 @@ def evaluate_model(model: nn.Module, data: Tensor, targets: Tensor, problem_type
     """
     outputs = model(data)
     return calculate_metrics(outputs, targets, problem_type)
+
 
 # Add any additional utility functions here

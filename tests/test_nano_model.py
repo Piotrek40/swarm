@@ -133,10 +133,7 @@ class TestNanoModel(unittest.TestCase):
         model.random_modification()
         final_state = model.state_dict()
         self.assertFalse(
-            all(
-                all(eq(initial_state[key], final_state[key]))
-                for key in initial_state.keys()
-            )
+            all(all(eq(initial_state[key], final_state[key])) for key in initial_state.keys())
         )
 
     def test_get_l2_regularization(self) -> None:

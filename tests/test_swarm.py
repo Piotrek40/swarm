@@ -112,8 +112,13 @@ class TestSwarm(unittest.TestCase):
         """Test if population statistics are correctly calculated."""
         stats = self.swarm.get_population_stats()
         required_keys = [
-            "total_population", "avg_fitness", "best_fitness", "avg_complexity",
-            "generation", "mutation_rates", "crossover_rates"
+            "total_population",
+            "avg_fitness",
+            "best_fitness",
+            "avg_complexity",
+            "generation",
+            "mutation_rates",
+            "crossover_rates",
         ]
         for key in required_keys:
             self.assertIn(key, stats)
@@ -129,7 +134,7 @@ class TestSwarm(unittest.TestCase):
         """Test if the swarm can be reset to its initial state."""
         data: Tensor = randn(32, self.dataset_config["input_size"]).to(DEVICE)
         targets: Tensor = randint(0, self.dataset_config["output_size"], (32,)).to(DEVICE)
-        
+
         self.swarm.evolve(data, targets)
         initial_generation = self.swarm.generation
         self.swarm.reset()
