@@ -9,6 +9,7 @@ import os
 from tslearn.datasets import UCR_UEA_datasets
 from datasets import load_dataset
 from config import DEVICE, BATCH_SIZE, TEST_SIZE, VALIDATION_SIZE, GENERATOR, DATASET_CONFIGS
+import random
 
 # Cache dla załadowanych danych
 data_cache = {}
