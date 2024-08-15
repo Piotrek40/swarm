@@ -1,9 +1,12 @@
+"""Metrics calculation utilities for NanoAI."""
+
 import torch
 from sklearn.metrics import accuracy_score, f1_score, mean_squared_error, r2_score
 import numpy as np
+from typing import Dict, List, Any
 
 
-def calculate_metrics(outputs, targets, problem_type):
+def calculate_metrics(outputs: torch.Tensor, targets: torch.Tensor, problem_type: str) -> Dict[str, float]:
     """
     Calculates various metrics based on the problem type.
 
@@ -13,7 +16,7 @@ def calculate_metrics(outputs, targets, problem_type):
         problem_type (str): The type of problem ('classification' or 'regression').
 
     Returns:
-        dict: A dictionary containing the calculated metrics.
+        Dict[str, float]: A dictionary containing the calculated metrics.
     """
     outputs = outputs.cpu().numpy()
     targets = targets.cpu().numpy()
@@ -34,7 +37,7 @@ def calculate_metrics(outputs, targets, problem_type):
         raise ValueError(f"Unknown problem type: {problem_type}")
 
 
-def calculate_model_complexity(model):
+def calculate_model_complexity(model: torch.nn.Module) -> int:
     """
     Calculates the complexity of a model based on its number of parameters.
 
@@ -47,12 +50,12 @@ def calculate_model_complexity(model):
     return sum(p.numel() for p in model.parameters())
 
 
-def calculate_diversity(population):
+def calculate_diversity(population: List[torch.nn.Module]) -> float:
     """
     Calculates the diversity of a population of models.
 
     Args:
-        population (list): A list of models.
+        population (List[torch.nn.Module]): A list of models.
 
     Returns:
         float: A measure of population diversity.
@@ -61,25 +64,30 @@ def calculate_diversity(population):
     return np.std(complexities) / np.mean(complexities)
 
 
-def calculate_ensemble_performance(ensemble, inputs, targets, problem_type):
+def calculate_ensemble_performance(
+    ensemble: List[torch.nn.Module], 
+    inputs: torch.Tensor, 
+    targets: torch.Tensor, 
+    problem_type: str
+) -> Dict[str, float]:
     """
     Calculates the performance of an ensemble of models.
 
     Args:
-        ensemble (list): A list of models forming the ensemble.
+        ensemble (List[torch.nn.Module]): A list of models forming the ensemble.
         inputs (torch.Tensor): The input data.
         targets (torch.Tensor): The true target values.
         problem_type (str): The type of problem ('classification' or 'regression').
 
     Returns:
-        dict: A dictionary containing the ensemble's performance metrics.
+        Dict[str, float]: A dictionary containing the ensemble's performance metrics.
     """
     outputs = torch.stack([model(inputs) for model in ensemble])
     ensemble_output = torch.mean(outputs, dim=0)
     return calculate_metrics(ensemble_output, targets, problem_type)
 
 
-def track_fitness_over_time(swarm, generations):
+def track_fitness_over_time(swarm: Any, generations: int) -> List[float]:
     """
     Tracks the best fitness of a swarm over multiple generations.
 
@@ -88,7 +96,7 @@ def track_fitness_over_time(swarm, generations):
         generations (int): The number of generations to track.
 
     Returns:
-        list: A list of best fitness values for each generation.
+        List[float]: A list of best fitness values for each generation.
     """
     fitness_history = []
     for _ in range(generations):
@@ -97,16 +105,16 @@ def track_fitness_over_time(swarm, generations):
     return fitness_history
 
 
-def calculate_pareto_front(population, objectives):
+def calculate_pareto_front(population: List[torch.nn.Module], objectives: List[callable]) -> List[torch.nn.Module]:
     """
     Calculates the Pareto front for a population based on multiple objectives.
 
     Args:
-        population (list): A list of models.
-        objectives (list): A list of objective functions to minimize.
+        population (List[torch.nn.Module]): A list of models.
+        objectives (List[callable]): A list of objective functions to minimize.
 
     Returns:
-        list: The models on the Pareto front.
+        List[torch.nn.Module]: The models on the Pareto front.
     """
     pareto_front = []
     for model in population:
