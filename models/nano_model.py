@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import random
+from typing import List, Dict, Any, Tuple
 import jsonpickle
 from config import DEVICE, GENERATOR, DROPOUT_RATE
 
@@ -10,7 +10,7 @@ class NanoModel(nn.Module):
     A flexible neural network model that can be configured as MLP, CNN, or RNN.
 
     Args:
-        config (dict): A dictionary containing the model configuration.
+        config (Dict[str, Any]): A dictionary containing the model configuration.
 
     Attributes:
         model_type (str): The type of the model ('mlp', 'cnn', or 'rnn').
@@ -18,7 +18,7 @@ class NanoModel(nn.Module):
         layers (nn.Sequential): The layers of the neural network.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Dict[str, Any]):
         super(NanoModel, self).__init__()
         self.model_type = config["model_type"]
         self.problem_type = config["problem_type"]
@@ -40,11 +40,12 @@ class NanoModel(nn.Module):
 
         self.to(DEVICE)
 
-        self.epigenetic_marks = {}
+        self.epigenetic_marks: Dict[str, bool] = {}
         self.fitness = float("-inf")
         self.niche = None
 
-    def _create_mlp(self, input_size, hidden_sizes, output_size):
+    def _create_mlp(self, input_size: int, hidden_sizes: List[int], output_size: int) -> nn.Sequential:
+        """Create a Multi-Layer Perceptron."""
         layers = []
         in_features = input_size
         for hidden_size in hidden_sizes:
@@ -55,7 +56,8 @@ class NanoModel(nn.Module):
         layers.append(nn.Linear(in_features, output_size))
         return nn.Sequential(*layers)
 
-    def _create_cnn(self, input_size, hidden_sizes, output_size):
+    def _create_cnn(self, input_size: Tuple[int, int, int], hidden_sizes: List[int], output_size: int) -> nn.Sequential:
+        """Create a Convolutional Neural Network."""
         layers = []
         in_channels = input_size[0]
         for hidden_size in hidden_sizes:
@@ -77,13 +79,14 @@ class NanoModel(nn.Module):
         )
         return nn.Sequential(*layers)
 
-    def _create_rnn(self, input_size, hidden_sizes, output_size):
+    def _create_rnn(self, input_size: int, hidden_sizes: List[int], output_size: int) -> nn.Sequential:
+        """Create a Recurrent Neural Network."""
         return nn.Sequential(
             nn.LSTM(input_size, hidden_sizes[0], num_layers=len(hidden_sizes), batch_first=True),
             nn.Linear(hidden_sizes[0], output_size),
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Defines the computation performed at every call.
 
@@ -104,7 +107,7 @@ class NanoModel(nn.Module):
             print(f"Error in forward pass: {str(e)}")
             raise
 
-    def mutate(self, mutation_rate):
+    def mutate(self, mutation_rate: float) -> None:
         """
         Applies mutation to the model parameters.
 
@@ -125,7 +128,7 @@ class NanoModel(nn.Module):
             print(f"Error during mutation: {str(e)}")
             raise
 
-    def clone(self):
+    def clone(self) -> 'NanoModel':
         """
         Creates a deep copy of the model.
 
@@ -139,7 +142,7 @@ class NanoModel(nn.Module):
         clone.niche = self.niche
         return clone
 
-    def get_complexity(self):
+    def get_complexity(self) -> int:
         """
         Calculates the complexity of the model.
 
@@ -148,7 +151,7 @@ class NanoModel(nn.Module):
         """
         return sum(p.numel() for p in self.parameters())
 
-    def apply_epigenetic_modification(self, modification):
+    def apply_epigenetic_modification(self, modification: str) -> None:
         """
         Applies an epigenetic modification to the model.
 
@@ -157,26 +160,22 @@ class NanoModel(nn.Module):
         """
         self.epigenetic_marks[modification] = True
 
-    def reset_epigenetic_modifications(self):
-        """
-        Resets all epigenetic modifications.
-        """
+    def reset_epigenetic_modifications(self) -> None:
+        """Resets all epigenetic modifications."""
         self.epigenetic_marks.clear()
 
-    def random_modification(self):
-        """
-        Applies a random modification to the model parameters.
-        """
+    def random_modification(self) -> None:
+        """Applies a random modification to the model parameters."""
         with torch.no_grad():
             for param in self.parameters():
                 param.data += torch.randn_like(param) * 0.01
 
-    def get_config(self):
+    def get_config(self) -> Dict[str, Any]:
         """
         Returns the configuration of the model.
 
         Returns:
-            dict: The model configuration.
+            Dict[str, Any]: The model configuration.
         """
         if self.model_type == "mlp":
             input_size = self.layers[0].in_features
@@ -202,19 +201,19 @@ class NanoModel(nn.Module):
         }
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: Dict[str, Any]) -> 'NanoModel':
         """
         Creates a new instance of NanoModel from a configuration dictionary.
 
         Args:
-            config (dict): The model configuration.
+            config (Dict[str, Any]): The model configuration.
 
         Returns:
             NanoModel: A new instance of NanoModel.
         """
         return cls(config)
 
-    def to_json(self):
+    def to_json(self) -> str:
         """
         Serializes the model to a JSON string.
 
@@ -224,7 +223,7 @@ class NanoModel(nn.Module):
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str):
+    def from_json(cls, json_str: str) -> 'NanoModel':
         """
         Creates a new instance of NanoModel from a JSON string.
 
@@ -236,7 +235,7 @@ class NanoModel(nn.Module):
         """
         return jsonpickle.decode(json_str)
 
-    def get_l2_regularization(self):
+    def get_l2_regularization(self) -> torch.Tensor:
         """
         Calculates the L2 regularization term for the model parameters.
 
@@ -263,12 +262,12 @@ class SymbioticPair:
         fitness (float): The fitness of the symbiotic pair.
     """
 
-    def __init__(self, model1, model2):
+    def __init__(self, model1: NanoModel, model2: NanoModel):
         self.model1 = model1
         self.model2 = model2
         self.fitness = float("-inf")
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Performs a forward pass through both models and combines their outputs.
 
@@ -282,7 +281,7 @@ class SymbioticPair:
         out2 = self.model2(x)
         return (out1 + out2) / 2  # Simple form of cooperation
 
-    def mutate(self, mutation_rate):
+    def mutate(self, mutation_rate: float) -> None:
         """
         Applies mutation to both models in the pair.
 
@@ -292,7 +291,7 @@ class SymbioticPair:
         self.model1.mutate(mutation_rate)
         self.model2.mutate(mutation_rate)
 
-    def get_complexity(self):
+    def get_complexity(self) -> int:
         """
         Calculates the total complexity of the symbiotic pair.
 
@@ -301,7 +300,7 @@ class SymbioticPair:
         """
         return self.model1.get_complexity() + self.model2.get_complexity()
 
-    def clone(self):
+    def clone(self) -> 'SymbioticPair':
         """
         Creates a deep copy of the symbiotic pair.
 
@@ -310,7 +309,7 @@ class SymbioticPair:
         """
         return SymbioticPair(self.model1.clone(), self.model2.clone())
 
-    def to(self, device):
+    def to(self, device: torch.device) -> 'SymbioticPair':
         """
         Moves both models to the specified device.
 
@@ -324,21 +323,17 @@ class SymbioticPair:
         self.model2.to(device)
         return self
 
-    def eval(self):
-        """
-        Sets both models to evaluation mode.
-        """
+    def eval(self) -> None:
+        """Sets both models to evaluation mode."""
         self.model1.eval()
         self.model2.eval()
 
-    def train(self):
-        """
-        Sets both models to training mode.
-        """
+    def train(self) -> None:
+        """Sets both models to training mode."""
         self.model1.train()
         self.model2.train()
 
-    def to_json(self):
+    def to_json(self) -> str:
         """
         Serializes the symbiotic pair to a JSON string.
 
@@ -348,12 +343,17 @@ class SymbioticPair:
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str):
+    def from_json(cls, json_str: str) -> 'SymbioticPair':
         """
         Creates a new instance of SymbioticPair from a JSON string.
 
         Args:
             json_str (str): A JSON representation of the symbiotic pair.
+
+        Returns:
+            SymbioticPair: A new instance of SymbioticPair.
+        """
+        return jsonpickle.decode(json_str)
 
         Returns:
             SymbioticPair: A new instance of SymbioticPair.
