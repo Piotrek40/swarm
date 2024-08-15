@@ -3,6 +3,7 @@ import random
 import numpy as np
 import gc
 import concurrent.futures
+from typing import List, Dict, Any, Tuple
 from models.nano_model import NanoModel, SymbioticPair
 from config import *
 
@@ -15,10 +16,8 @@ class Environment:
     def __init__(self):
         self.current_condition = "normal"
 
-    def change(self):
-        """
-        Changes the current environmental condition randomly.
-        """
+    def change(self) -> None:
+        """Changes the current environmental condition randomly."""
         self.current_condition = random.choice(ENVIRONMENT_CONDITIONS)
 
 
@@ -30,10 +29,10 @@ class Niche:
         specialization (str): The specialization of the niche.
     """
 
-    def __init__(self, specialization):
+    def __init__(self, specialization: str):
         self.specialization = specialization
 
-    def evaluate(self, model, environment, data, targets):
+    def evaluate(self, model: NanoModel, environment: Environment, data: torch.Tensor, targets: torch.Tensor) -> float:
         """
         Evaluates a model in the current niche and environment.
 
@@ -78,17 +77,17 @@ class Subpopulation:
     Represents a subpopulation of models.
 
     Args:
-        models (list): A list of NanoModel or SymbioticPair instances.
+        models (List[NanoModel]): A list of NanoModel or SymbioticPair instances.
         niche (Niche): The niche for this subpopulation.
     """
 
-    def __init__(self, models, niche):
+    def __init__(self, models: List[NanoModel], niche: Niche):
         self.models = models
         self.niche = niche
         self.mutation_rate = INITIAL_MUTATION_RATE
         self.crossover_rate = INITIAL_CROSSOVER_RATE
 
-    def adapt(self, environment, data, targets):
+    def adapt(self, environment: Environment, data: torch.Tensor, targets: torch.Tensor) -> None:
         """
         Adapts the subpopulation to the current environment.
 
@@ -111,17 +110,13 @@ class Subpopulation:
         except Exception as e:
             print(f"Error in subpopulation adaptation: {str(e)}")
 
-    def selection(self):
-        """
-        Performs selection on the subpopulation.
-        """
+    def selection(self) -> None:
+        """Performs selection on the subpopulation."""
         self.models.sort(key=lambda m: m.fitness, reverse=True)
         self.models = self.models[: len(self.models) // 2]
 
-    def reproduce(self):
-        """
-        Reproduces the subpopulation through crossover and mutation.
-        """
+    def reproduce(self) -> None:
+        """Reproduces the subpopulation through crossover and mutation."""
         new_models = []
         while len(new_models) + len(self.models) < len(self.models) * 2:
             if random.random() < SYMBIOSIS_PROBABILITY:
@@ -134,7 +129,7 @@ class Subpopulation:
             new_models.append(child)
         self.models.extend(new_models)
 
-    def crossover(self, parent1, parent2):
+    def crossover(self, parent1: NanoModel, parent2: NanoModel) -> NanoModel:
         """
         Performs crossover between two parent models.
 
@@ -151,10 +146,8 @@ class Subpopulation:
             child_param.data[mask] = parent2_param.data[mask]
         return child
 
-    def adapt_mutation_rate(self):
-        """
-        Adapts the mutation rate based on population fitness.
-        """
+    def adapt_mutation_rate(self) -> None:
+        """Adapts the mutation rate based on population fitness."""
         fitness_improvement = (self.models[0].fitness - self.models[-1].fitness) / abs(
             self.models[-1].fitness
         )
@@ -163,10 +156,8 @@ class Subpopulation:
         else:
             self.mutation_rate = min(self.mutation_rate * 1.1, MUTATION_RATE_RANGE[1])
 
-    def adapt_crossover_rate(self):
-        """
-        Adapts the crossover rate based on population fitness.
-        """
+    def adapt_crossover_rate(self) -> None:
+        """Adapts the crossover rate based on population fitness."""
         avg_fitness = sum(m.fitness for m in self.models) / len(self.models)
         if avg_fitness > self.models[0].fitness * 0.9:
             self.crossover_rate = min(self.crossover_rate * 1.1, CROSSOVER_RATE_RANGE[1])
@@ -179,11 +170,11 @@ class EvolutionarySwarm:
     Represents the main evolutionary swarm of models.
 
     Args:
-        dataset_config (dict): The configuration for the dataset.
+        dataset_config (Dict[str, Any]): The configuration for the dataset.
         initial_population_size (int): The initial size of the population.
     """
 
-    def __init__(self, dataset_config, initial_population_size):
+    def __init__(self, dataset_config: Dict[str, Any], initial_population_size: int):
         if not isinstance(dataset_config, dict):
             raise TypeError("dataset_config must be a dictionary")
         if not isinstance(initial_population_size, int) or initial_population_size <= 0:
@@ -201,11 +192,11 @@ class EvolutionarySwarm:
             for specialization in NICHE_SPECIALIZATIONS[:NUM_SUBPOPULATIONS]
         ]
         self.environment = Environment()
-        self.best_model = None
+        self.best_model: NanoModel = None
         self.best_fitness = float("-inf")
         self.generation = 0
 
-    def evolve(self, data, targets):
+    def evolve(self, data: torch.Tensor, targets: torch.Tensor) -> None:
         """
         Evolves the swarm for one generation.
 
@@ -261,20 +252,16 @@ class EvolutionarySwarm:
         finally:
             self.clean_memory()
 
-    def clean_memory(self):
-        """
-        Cleans up memory by explicitly deleting models and calling garbage collection.
-        """
+    def clean_memory(self) -> None:
+        """Cleans up memory by explicitly deleting models and calling garbage collection."""
         for subpop in self.subpopulations:
             for model in subpop.models:
                 del model
         gc.collect()
         torch.cuda.empty_cache()
 
-    def adjust_population_size(self):
-        """
-        Adjusts the population size to stay within the maximum limit.
-        """
+    def adjust_population_size(self) -> None:
+        """Adjusts the population size to stay within the maximum limit."""
         total_population = sum(len(subpop.models) for subpop in self.subpopulations)
         if total_population > MAX_POPULATION_SIZE:
             reduction_factor = MAX_POPULATION_SIZE / total_population
@@ -283,24 +270,18 @@ class EvolutionarySwarm:
                     subpop.models, int(len(subpop.models) * reduction_factor)
                 )
 
-    def bottleneck_effect(self):
-        """
-        Simulates a population bottleneck by drastically reducing the population size.
-        """
+    def bottleneck_effect(self) -> None:
+        """Simulates a population bottleneck by drastically reducing the population size."""
         for subpop in self.subpopulations:
-            subpop.models = subpop.models[
-                : len(subpop.models) // 5
-            ]  # Drastyczne zmniejszenie populacji
+            subpop.models = subpop.models[: len(subpop.models) // 5]
             while len(subpop.models) < len(subpop.models) * 2:
                 subpop.models.append(random.choice(subpop.models).clone())
 
-    def exchange_between_populations(self):
-        """
-        Exchanges models between subpopulations to maintain diversity.
-        """
+    def exchange_between_populations(self) -> None:
+        """Exchanges models between subpopulations to maintain diversity."""
         for i in range(len(self.subpopulations)):
             for j in range(i + 1, len(self.subpopulations)):
-                if random.random() < 0.2:  # 20% szans na wymianę
+                if random.random() < 0.2:  # 20% chance of exchange
                     model_i = random.choice(self.subpopulations[i].models)
                     model_j = random.choice(self.subpopulations[j].models)
                     self.subpopulations[i].models.remove(model_i)
@@ -308,7 +289,7 @@ class EvolutionarySwarm:
                     self.subpopulations[i].models.append(model_j)
                     self.subpopulations[j].models.append(model_i)
 
-    def get_best_model(self):
+    def get_best_model(self) -> NanoModel:
         """
         Returns the best model found so far.
 
@@ -317,12 +298,12 @@ class EvolutionarySwarm:
         """
         return self.best_model
 
-    def get_population_stats(self):
+    def get_population_stats(self) -> Dict[str, Any]:
         """
         Calculates and returns statistics about the current population.
 
         Returns:
-            dict: A dictionary containing population statistics.
+            Dict[str, Any]: A dictionary containing population statistics.
         """
         all_models = [model for subpop in self.subpopulations for model in subpop.models]
         return {
@@ -335,7 +316,7 @@ class EvolutionarySwarm:
             "crossover_rates": [subpop.crossover_rate for subpop in self.subpopulations],
         }
 
-    def save_checkpoint(self, path):
+    def save_checkpoint(self, path: str) -> None:
         """
         Saves the current state of the swarm to a checkpoint file.
 
@@ -359,7 +340,7 @@ class EvolutionarySwarm:
         }
         torch.save(checkpoint, path)
 
-    def load_checkpoint(self, path):
+    def load_checkpoint(self, path: str) -> None:
         """
         Loads the state of the swarm from a checkpoint file.
 
@@ -387,33 +368,27 @@ class EvolutionarySwarm:
             self.subpopulations[i].mutation_rate = subpop_data["mutation_rate"]
             self.subpopulations[i].crossover_rate = subpop_data["crossover_rate"]
 
-    def eval(self):
-        """
-        Sets all models in the swarm to evaluation mode.
-        """
+    def eval(self) -> None:
+        """Sets all models in the swarm to evaluation mode."""
         for subpop in self.subpopulations:
             for model in subpop.models:
                 model.eval()
         if self.best_model:
             self.best_model.eval()
 
-    def train(self):
-        """
-        Sets all models in the swarm to training mode.
-        """
+    def train(self) -> None:
+        """Sets all models in the swarm to training mode."""
         for subpop in self.subpopulations:
             for model in subpop.models:
                 model.train()
         if self.best_model:
             self.best_model.train()
 
-    def reset(self):
-        """
-        Resets the swarm to its initial state.
-        """
+    def reset(self) -> None:
+        """Resets the swarm to its initial state."""
         self.__init__(self.dataset_config, INITIAL_POPULATION_SIZE)
 
-    def parallel_evolve(self, data, targets, num_processes=NUM_PROCESSES):
+    def parallel_evolve(self, data: torch.Tensor, targets: torch.Tensor, num_processes: int = NUM_PROCESSES) -> 'EvolutionarySwarm':
         """
         Evolves the swarm in parallel.
 
