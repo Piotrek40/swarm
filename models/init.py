@@ -12,4 +12,4 @@ from .swarm import EvolutionarySwarm
 # Define a type alias for models that can be either NanoModel or SymbioticPair
 ModelType = Union[NanoModel, SymbioticPair]
 
-__all__ = ['NanoModel', 'SymbioticPair', 'EvolutionarySwarm', 'ModelType']
+__all__ = ["NanoModel", "SymbioticPair", "EvolutionarySwarm", "ModelType"]

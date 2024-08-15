@@ -8,7 +8,8 @@ from typing import List, Dict, Any
 
 from .experiment_runner import run_experiments
 
-__all__ = ['run_experiments']
+__all__ = ["run_experiments"]
+
 
 def get_available_experiments() -> List[str]:
     """
@@ -21,6 +22,7 @@ def get_available_experiments() -> List[str]:
         A list of strings representing available experiment names or configurations.
     """
     return ["default_experiment"]  # placeholder, expand as needed
+
 
 def validate_experiment_config(config: Dict[str, Any]) -> bool:
     """

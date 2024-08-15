@@ -60,21 +60,27 @@ class NanoModel(Module):
         layers.append(Linear(in_features, output_size))
         return Sequential(*layers)
 
-    def _create_cnn(self, input_size: Tuple[int, int, int], hidden_sizes: List[int], output_size: int) -> Sequential:
+    def _create_cnn(
+        self, input_size: Tuple[int, int, int], hidden_sizes: List[int], output_size: int
+    ) -> Sequential:
         """Create a Convolutional Neural Network."""
         layers = []
         in_channels = input_size[0]
         for hidden_size in hidden_sizes:
-            layers.extend([
-                Conv2d(in_channels, hidden_size, kernel_size=3, padding=1),
-                ReLU(),
-                MaxPool2d(2),
-            ])
+            layers.extend(
+                [
+                    Conv2d(in_channels, hidden_size, kernel_size=3, padding=1),
+                    ReLU(),
+                    MaxPool2d(2),
+                ]
+            )
             in_channels = hidden_size
-        layers.extend([
-            Flatten(),
-            Linear(hidden_sizes[-1] * (input_size[1] // 8) * (input_size[2] // 8), output_size),
-        ])
+        layers.extend(
+            [
+                Flatten(),
+                Linear(hidden_sizes[-1] * (input_size[1] // 8) * (input_size[2] // 8), output_size),
+            ]
+        )
         return Sequential(*layers)
 
     def _create_rnn(self, input_size: int, hidden_sizes: List[int], output_size: int) -> Sequential:
@@ -121,13 +127,15 @@ class NanoModel(Module):
         try:
             with no_grad():
                 for param in self.parameters():
-                    mask = (rand(param.shape, generator=GENERATOR).to(param.device) < mutation_rate)
-                    param.data += randn(param.shape, generator=GENERATOR).to(param.device) * mask * 0.1
+                    mask = rand(param.shape, generator=GENERATOR).to(param.device) < mutation_rate
+                    param.data += (
+                        randn(param.shape, generator=GENERATOR).to(param.device) * mask * 0.1
+                    )
         except RuntimeError as e:
             print(f"Error during mutation: {str(e)}")
             raise
 
-    def clone(self) -> 'NanoModel':
+    def clone(self) -> "NanoModel":
         """
         Create a deep copy of the model.
 
@@ -182,7 +190,9 @@ class NanoModel(Module):
             output_size = self.layers[-1].out_features
         elif self.model_type == "cnn":
             input_size = (self.layers[0].in_channels, 32, 32)  # Assuming CIFAR10
-            hidden_sizes = [layer.out_channels for layer in self.layers if isinstance(layer, Conv2d)]
+            hidden_sizes = [
+                layer.out_channels for layer in self.layers if isinstance(layer, Conv2d)
+            ]
             output_size = self.layers[-1].out_features
         else:  # RNN
             input_size = self.layers[0].input_size
@@ -198,7 +208,7 @@ class NanoModel(Module):
         }
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> 'NanoModel':
+    def from_config(cls, config: Dict[str, Any]) -> "NanoModel":
         """
         Create a new instance of NanoModel from a configuration dictionary.
 
@@ -220,7 +230,7 @@ class NanoModel(Module):
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'NanoModel':
+    def from_json(cls, json_str: str) -> "NanoModel":
         """
         Create a new instance of NanoModel from a JSON string.
 
@@ -297,7 +307,7 @@ class SymbioticPair:
         """
         return self.model1.get_complexity() + self.model2.get_complexity()
 
-    def clone(self) -> 'SymbioticPair':
+    def clone(self) -> "SymbioticPair":
         """
         Create a deep copy of the symbiotic pair.
 
@@ -306,7 +316,7 @@ class SymbioticPair:
         """
         return SymbioticPair(self.model1.clone(), self.model2.clone())
 
-    def to(self, device: device) -> 'SymbioticPair':
+    def to(self, device: device) -> "SymbioticPair":
         """
         Move both models to the specified device.
 
@@ -340,7 +350,7 @@ class SymbioticPair:
         return jsonpickle.encode(self)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'SymbioticPair':
+    def from_json(cls, json_str: str) -> "SymbioticPair":
         """
         Create a new instance of SymbioticPair from a JSON string.
 

@@ -20,8 +20,15 @@ from utils.metrics import (
 )
 from utils.visualizer import Visualizer
 from config import (
-    LOG_DIR, RESULT_DIR, DEVICE, EARLY_STOPPING_PATIENCE, REPORT_INTERVAL,
-    CHECKPOINT_INTERVAL, CHECKPOINT_DIR, L2_LAMBDA, EXPERIMENT_CONFIGS
+    LOG_DIR,
+    RESULT_DIR,
+    DEVICE,
+    EARLY_STOPPING_PATIENCE,
+    REPORT_INTERVAL,
+    CHECKPOINT_INTERVAL,
+    CHECKPOINT_DIR,
+    L2_LAMBDA,
+    EXPERIMENT_CONFIGS,
 )
 
 
@@ -41,21 +48,37 @@ def run_experiments(experiment_configs: List[Dict[str, Any]]) -> List[Dict[str, 
     try:
         for config_idx, config in enumerate(experiment_configs):
             dataset_name = config["dataset"]
-            logger.log_event(f"\nRunning experiment for {dataset_name} dataset with config: {config}")
+            logger.log_event(
+                f"\nRunning experiment for {dataset_name} dataset with config: {config}"
+            )
 
             dataset_config = get_dataset_info(dataset_name)
             train_loader, val_loader, test_loader = load_data(dataset_name)
 
-            swarm = EvolutionarySwarm(dataset_config=dataset_config, initial_population_size=config["population_size"])
+            swarm = EvolutionarySwarm(
+                dataset_config=dataset_config, initial_population_size=config["population_size"]
+            )
 
             start_time = time.time()
-            result = run_single_experiment(swarm, config, dataset_name, train_loader, val_loader, test_loader, logger, config_idx)
+            result = run_single_experiment(
+                swarm,
+                config,
+                dataset_name,
+                train_loader,
+                val_loader,
+                test_loader,
+                logger,
+                config_idx,
+            )
             end_time = time.time()
 
             result["training_time"] = end_time - start_time
             all_results.append(result)
 
-            save_final_results(os.path.join(RESULT_DIR, f"final_results_{dataset_name}_config_{config_idx}.json"), result)
+            save_final_results(
+                os.path.join(RESULT_DIR, f"final_results_{dataset_name}_config_{config_idx}.json"),
+                result,
+            )
 
             logger.log_event(f"Test Loss: {result['test_loss']:.4f}")
             logger.log_event(f"Test Metrics: {result['test_metrics']}")
@@ -81,7 +104,7 @@ def run_single_experiment(
     val_loader: DataLoader,
     test_loader: DataLoader,
     logger: Logger,
-    config_idx: int
+    config_idx: int,
 ) -> Dict[str, Any]:
     """
     Run a single experiment with given configuration.
@@ -109,10 +132,14 @@ def run_single_experiment(
         try:
             train_generation(swarm, train_loader, logger, generation)
             val_loss, val_metrics = validate(swarm, val_loader, config["problem_type"])
-            diversity = calculate_diversity([model for subpop in swarm.subpopulations for model in subpop.models])
+            diversity = calculate_diversity(
+                [model for subpop in swarm.subpopulations for model in subpop.models]
+            )
 
             stats = swarm.get_population_stats()
-            logger.log_event(f"Validation Loss: {val_loss:.4f}, Best Fitness: {stats['best_fitness']:.4f}, Diversity: {diversity:.4f}")
+            logger.log_event(
+                f"Validation Loss: {val_loss:.4f}, Best Fitness: {stats['best_fitness']:.4f}, Diversity: {diversity:.4f}"
+            )
             logger.log_event(f"Validation Metrics: {val_metrics}")
 
             generations.append(generation)
@@ -131,7 +158,18 @@ def run_single_experiment(
                 logger.log_event(f"Early stopping triggered after {generation + 1} generations")
                 break
 
-            handle_checkpoints_and_visualizations(swarm, dataset_name, config_idx, generation, val_loss, stats, val_metrics, generations, fitness_values, diversity_values)
+            handle_checkpoints_and_visualizations(
+                swarm,
+                dataset_name,
+                config_idx,
+                generation,
+                val_loss,
+                stats,
+                val_metrics,
+                generations,
+                fitness_values,
+                diversity_values,
+            )
 
         except Exception as e:
             logger.log_error(f"Error in generation {generation + 1}: {str(e)}")
@@ -150,7 +188,9 @@ def run_single_experiment(
     }
 
 
-def train_generation(swarm: EvolutionarySwarm, train_loader: DataLoader, logger: Logger, generation: int) -> None:
+def train_generation(
+    swarm: EvolutionarySwarm, train_loader: DataLoader, logger: Logger, generation: int
+) -> None:
     """
     Train the swarm for one generation.
 
@@ -167,7 +207,9 @@ def train_generation(swarm: EvolutionarySwarm, train_loader: DataLoader, logger:
             swarm.parallel_evolve(inputs, targets)
         except RuntimeError as e:
             if "out of memory" in str(e):
-                logger.log_warning(f"CUDA out of memory in generation {generation + 1}. Skipping batch.")
+                logger.log_warning(
+                    f"CUDA out of memory in generation {generation + 1}. Skipping batch."
+                )
                 if hasattr(torch.cuda, "empty_cache"):
                     torch.cuda.empty_cache()
             else:
@@ -184,7 +226,7 @@ def handle_checkpoints_and_visualizations(
     val_metrics: Dict[str, float],
     generations: List[int],
     fitness_values: List[float],
-    diversity_values: List[float]
+    diversity_values: List[float],
 ) -> None:
     """
     Handle checkpoints and visualizations during training.
@@ -204,7 +246,10 @@ def handle_checkpoints_and_visualizations(
     if (generation + 1) % REPORT_INTERVAL == 0:
         save_partial_results(
             os.path.join(LOG_DIR, f"partial_results_{dataset_name}_config_{config_idx}.jsonl"),
-            generation, val_loss, stats, val_metrics
+            generation,
+            val_loss,
+            stats,
+            val_metrics,
         )
 
     if (generation + 1) % CHECKPOINT_INTERVAL == 0:
@@ -215,7 +260,9 @@ def handle_checkpoints_and_visualizations(
         Visualizer.plot_population_diversity(diversity_values, dataset_name, config_idx)
 
 
-def validate(swarm: EvolutionarySwarm, data_loader: DataLoader, problem_type: str) -> Tuple[float, Dict[str, float]]:
+def validate(
+    swarm: EvolutionarySwarm, data_loader: DataLoader, problem_type: str
+) -> Tuple[float, Dict[str, float]]:
     """
     Validate the swarm's best model on a given data loader.
 
@@ -238,7 +285,11 @@ def validate(swarm: EvolutionarySwarm, data_loader: DataLoader, problem_type: st
         for inputs, targets in data_loader:
             inputs, targets = inputs.to(DEVICE), targets.to(DEVICE)
             outputs = best_model(inputs)
-            loss = nn.functional.mse_loss(outputs, targets) if problem_type == "regression" else nn.functional.cross_entropy(outputs, targets)
+            loss = (
+                nn.functional.mse_loss(outputs, targets)
+                if problem_type == "regression"
+                else nn.functional.cross_entropy(outputs, targets)
+            )
             total_loss += loss.item()
             all_outputs.append(outputs)
             all_targets.append(targets)
@@ -263,7 +314,9 @@ def save_best_model(swarm: EvolutionarySwarm, dataset_name: str, config_idx: int
     save(swarm.get_best_model().state_dict(), best_model_path)
 
 
-def save_checkpoint(swarm: EvolutionarySwarm, dataset_name: str, config_idx: int, generation: int) -> None:
+def save_checkpoint(
+    swarm: EvolutionarySwarm, dataset_name: str, config_idx: int, generation: int
+) -> None:
     """
     Save a checkpoint of the swarm.
 
@@ -273,11 +326,19 @@ def save_checkpoint(swarm: EvolutionarySwarm, dataset_name: str, config_idx: int
         config_idx: Index of the configuration.
         generation: Current generation number.
     """
-    checkpoint_path = os.path.join(CHECKPOINT_DIR, f"checkpoint_{dataset_name}_config_{config_idx}_gen_{generation}.pth")
+    checkpoint_path = os.path.join(
+        CHECKPOINT_DIR, f"checkpoint_{dataset_name}_config_{config_idx}_gen_{generation}.pth"
+    )
     swarm.save_checkpoint(checkpoint_path)
 
 
-def save_partial_results(file_path: str, generation: int, val_loss: float, stats: Dict[str, Any], metrics: Dict[str, float]) -> None:
+def save_partial_results(
+    file_path: str,
+    generation: int,
+    val_loss: float,
+    stats: Dict[str, Any],
+    metrics: Dict[str, float],
+) -> None:
     """
     Save partial results during the experiment.
 
@@ -290,7 +351,9 @@ def save_partial_results(file_path: str, generation: int, val_loss: float, stats
     """
     try:
         with open(file_path, "a") as f:
-            json.dump({"generation": generation, "val_loss": val_loss, "metrics": metrics, **stats}, f)
+            json.dump(
+                {"generation": generation, "val_loss": val_loss, "metrics": metrics, **stats}, f
+            )
             f.write("\n")
     except IOError as e:
         print(f"Error saving partial results: {str(e)}")
@@ -321,16 +384,20 @@ def save_experiment_summary(file_path: str, all_results: List[Dict[str, Any]]) -
     """
     try:
         with open(file_path, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=["dataset", "config", "test_loss", "test_metrics", "training_time"])
+            writer = csv.DictWriter(
+                f, fieldnames=["dataset", "config", "test_loss", "test_metrics", "training_time"]
+            )
             writer.writeheader()
             for result in all_results:
-                writer.writerow({
-                    "dataset": result["dataset"],
-                    "config": str(result["config"]),
-                    "test_loss": result["test_loss"],
-                    "test_metrics": str(result["test_metrics"]),
-                    "training_time": result["training_time"],
-                })
+                writer.writerow(
+                    {
+                        "dataset": result["dataset"],
+                        "config": str(result["config"]),
+                        "test_loss": result["test_loss"],
+                        "test_metrics": str(result["test_metrics"]),
+                        "training_time": result["training_time"],
+                    }
+                )
     except IOError as e:
         print(f"Error saving experiment summary: {str(e)}")
 
@@ -358,7 +425,13 @@ def continue_experiment(checkpoint_path: str, config: Dict[str, Any]) -> Evoluti
         raise
 
 
-def train_step(swarm: EvolutionarySwarm, optimizer: optim.Optimizer, data: Tensor, targets: Tensor, l2_lambda: float = L2_LAMBDA) -> float:
+def train_step(
+    swarm: EvolutionarySwarm,
+    optimizer: optim.Optimizer,
+    data: Tensor,
+    targets: Tensor,
+    l2_lambda: float = L2_LAMBDA,
+) -> float:
     """
     Perform a single training step.
 

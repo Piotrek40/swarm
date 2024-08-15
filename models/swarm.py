@@ -12,12 +12,22 @@ from torch.cuda import empty_cache
 
 from models.nano_model import NanoModel, SymbioticPair
 from config import (
-    ENVIRONMENT_CONDITIONS, INITIAL_MUTATION_RATE, INITIAL_CROSSOVER_RATE,
-    GENETIC_DRIFT_PROBABILITY, ADAPTIVE_MUTATION_RATE, ADAPTIVE_CROSSOVER_RATE,
-    SYMBIOSIS_PROBABILITY, MUTATION_RATE_RANGE, CROSSOVER_RATE_RANGE,
-    NUM_SUBPOPULATIONS, NICHE_SPECIALIZATIONS, BOTTLENECK_PROBABILITY,
-    MAX_POPULATION_SIZE, EPIGENETIC_RESET_PROBABILITY, INITIAL_POPULATION_SIZE,
-    NUM_PROCESSES
+    ENVIRONMENT_CONDITIONS,
+    INITIAL_MUTATION_RATE,
+    INITIAL_CROSSOVER_RATE,
+    GENETIC_DRIFT_PROBABILITY,
+    ADAPTIVE_MUTATION_RATE,
+    ADAPTIVE_CROSSOVER_RATE,
+    SYMBIOSIS_PROBABILITY,
+    MUTATION_RATE_RANGE,
+    CROSSOVER_RATE_RANGE,
+    NUM_SUBPOPULATIONS,
+    NICHE_SPECIALIZATIONS,
+    BOTTLENECK_PROBABILITY,
+    MAX_POPULATION_SIZE,
+    EPIGENETIC_RESET_PROBABILITY,
+    INITIAL_POPULATION_SIZE,
+    NUM_PROCESSES,
 )
 
 
@@ -38,7 +48,13 @@ class Niche:
     def __init__(self, specialization: str) -> None:
         self.specialization = specialization
 
-    def evaluate(self, model: Union[NanoModel, SymbioticPair], environment: Environment, data: Tensor, targets: Tensor) -> float:
+    def evaluate(
+        self,
+        model: Union[NanoModel, SymbioticPair],
+        environment: Environment,
+        data: Tensor,
+        targets: Tensor,
+    ) -> float:
         """Evaluates a model in the current niche and environment."""
         try:
             with torch.no_grad():
@@ -47,10 +63,16 @@ class Niche:
                     outputs = outputs.view(targets.shape)
                 loss = F.mse_loss(outputs, targets)
 
-            if self.specialization == "outlier_focus" and environment.current_condition == "challenging":
+            if (
+                self.specialization == "outlier_focus"
+                and environment.current_condition == "challenging"
+            ):
                 residuals = (outputs - targets).abs()
                 loss = (residuals**2).mean() + residuals.max()
-            elif self.specialization == "noise_resistant" and environment.current_condition == "extreme":
+            elif (
+                self.specialization == "noise_resistant"
+                and environment.current_condition == "extreme"
+            ):
                 noisy_data = data + randn_like(data) * 0.1
                 noisy_outputs = model(noisy_data)
                 loss = F.mse_loss(noisy_outputs, targets)
@@ -105,7 +127,9 @@ class Subpopulation:
             new_models.append(child)
         self.models.extend(new_models)
 
-    def crossover(self, parent1: Union[NanoModel, SymbioticPair], parent2: Union[NanoModel, SymbioticPair]) -> Union[NanoModel, SymbioticPair]:
+    def crossover(
+        self, parent1: Union[NanoModel, SymbioticPair], parent2: Union[NanoModel, SymbioticPair]
+    ) -> Union[NanoModel, SymbioticPair]:
         """Performs crossover between two parent models."""
         child = parent1.clone()
         for child_param, parent2_param in zip(child.parameters(), parent2.parameters()):
@@ -115,7 +139,9 @@ class Subpopulation:
 
     def adapt_mutation_rate(self) -> None:
         """Adapts the mutation rate based on population fitness."""
-        fitness_improvement = (self.models[0].fitness - self.models[-1].fitness) / abs(self.models[-1].fitness)
+        fitness_improvement = (self.models[0].fitness - self.models[-1].fitness) / abs(
+            self.models[-1].fitness
+        )
         if fitness_improvement > 0.1:
             self.mutation_rate = max(self.mutation_rate * 0.9, MUTATION_RATE_RANGE[0])
         else:
@@ -142,7 +168,10 @@ class EvolutionarySwarm:
         self.dataset_config = dataset_config
         self.subpopulations = [
             Subpopulation(
-                [NanoModel(dataset_config) for _ in range(initial_population_size // NUM_SUBPOPULATIONS)],
+                [
+                    NanoModel(dataset_config)
+                    for _ in range(initial_population_size // NUM_SUBPOPULATIONS)
+                ],
                 Niche(specialization),
             )
             for specialization in NICHE_SPECIALIZATIONS[:NUM_SUBPOPULATIONS]
@@ -166,7 +195,12 @@ class EvolutionarySwarm:
             self.environment.change()
 
             with futures.ThreadPoolExecutor() as executor:
-                list(executor.map(lambda subpop: subpop.adapt(self.environment, data, targets), self.subpopulations))
+                list(
+                    executor.map(
+                        lambda subpop: subpop.adapt(self.environment, data, targets),
+                        self.subpopulations,
+                    )
+                )
 
             if random.random() < BOTTLENECK_PROBABILITY:
                 self.bottleneck_effect()
@@ -182,7 +216,9 @@ class EvolutionarySwarm:
             if best_model.fitness > self.best_fitness or self.best_model is None:
                 self.best_fitness = best_model.fitness
                 self.best_model = best_model.clone()
-                print(f"Generation {self.generation}: New best model found. Fitness: {self.best_fitness}")
+                print(
+                    f"Generation {self.generation}: New best model found. Fitness: {self.best_fitness}"
+                )
 
             if random.random() < EPIGENETIC_RESET_PROBABILITY:
                 for subpop in self.subpopulations:
@@ -210,7 +246,9 @@ class EvolutionarySwarm:
         if total_population > MAX_POPULATION_SIZE:
             reduction_factor = MAX_POPULATION_SIZE / total_population
             for subpop in self.subpopulations:
-                subpop.models = random.sample(subpop.models, int(len(subpop.models) * reduction_factor))
+                subpop.models = random.sample(
+                    subpop.models, int(len(subpop.models) * reduction_factor)
+                )
 
     def bottleneck_effect(self) -> None:
         """Simulates a population bottleneck by drastically reducing the population size."""
@@ -221,7 +259,11 @@ class EvolutionarySwarm:
 
     def exchange_between_populations(self) -> None:
         """Exchanges models between subpopulations to maintain diversity."""
-        for i, j in [(i, j) for i in range(len(self.subpopulations)) for j in range(i+1, len(self.subpopulations))]:
+        for i, j in [
+            (i, j)
+            for i in range(len(self.subpopulations))
+            for j in range(i + 1, len(self.subpopulations))
+        ]:
             if random.random() < 0.2:  # 20% chance of exchange
                 model_i = random.choice(self.subpopulations[i].models)
                 model_j = random.choice(self.subpopulations[j].models)
@@ -279,7 +321,8 @@ class EvolutionarySwarm:
         for i, subpop_data in enumerate(checkpoint["subpopulations"]):
             self.subpopulations[i].niche.specialization = subpop_data["niche"]
             self.subpopulations[i].models = [
-                NanoModel.from_json(model_json) if isinstance(model_json, str)
+                NanoModel.from_json(model_json)
+                if isinstance(model_json, str)
                 else SymbioticPair.from_json(model_json)
                 for model_json in subpop_data["models"]
             ]
@@ -306,11 +349,15 @@ class EvolutionarySwarm:
         """Resets the swarm to its initial state."""
         self.__init__(self.dataset_config, INITIAL_POPULATION_SIZE)
 
-    def parallel_evolve(self, data: Tensor, targets: Tensor, num_processes: int = NUM_PROCESSES) -> 'EvolutionarySwarm':
+    def parallel_evolve(
+        self, data: Tensor, targets: Tensor, num_processes: int = NUM_PROCESSES
+    ) -> "EvolutionarySwarm":
         """Evolves the swarm in parallel."""
         try:
             with futures.ProcessPoolExecutor(max_workers=num_processes) as executor:
-                future_results = list(executor.map(lambda _: self.evolve(data, targets), range(num_processes)))
+                future_results = list(
+                    executor.map(lambda _: self.evolve(data, targets), range(num_processes))
+                )
             best_swarm = max(future_results, key=lambda swarm: swarm.best_fitness)
             return best_swarm
         except Exception as e:
